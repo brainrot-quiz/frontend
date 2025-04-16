@@ -1078,7 +1078,7 @@ export default function Home() {
     // 짧은 지연 후 처리 상태 해제
     setTimeout(() => {
       setIsProcessing(false);
-    }, 500); // 800ms에서 500ms로 감소
+    }, 500);
   };
 
   // 음성인식 시작 함수 개선
@@ -1109,6 +1109,12 @@ export default function Home() {
       return;
     }
     
+    // 결과 화면이 표시 중이면 막기
+    if (showResult) {
+      console.log('결과 화면이 표시 중입니다. 음성 인식 시작을 무시합니다.');
+      return;
+    }
+    
     try {
       // 브라우저 음성인식 지원 여부 확인
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1125,8 +1131,11 @@ export default function Home() {
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       const isIOSSafari = isIOS && isSafari;
       
+      // 마이크 활성화 상태 true로 설정 - 과도하게 false로 변경되는 것 방지
+      setIsListening(true);
+      
       console.log(`음성인식 시작 - 디바이스: ${isMobile ? '모바일' : '데스크탑'}, iOS Safari: ${isIOSSafari}, 현재 상태:`, { 
-        isListening, 
+        isListening: true, // 무조건 활성화 상태로 로깅
         isProcessing, 
         isAnswerProcessing, 
         showResult,
@@ -1134,15 +1143,13 @@ export default function Home() {
         gameState
       });
       
-      // 마이크 상태 명확히 설정 - 인스턴스 생성 전에 UI 업데이트
-      setIsListening(true);
-      
+      // 새 인스턴스 생성
       const recognitionInstance = new SpeechRecognition();
       
       // 기본 설정
       recognitionInstance.lang = 'it-IT'; // 이탈리아어 인식
-      recognitionInstance.continuous = !isIOSSafari; // iOS Safari를 제외한 환경에서 연속 인식 활성화
-      recognitionInstance.interimResults = !isIOSSafari; // iOS Safari를 제외한 환경에서 중간 결과 사용
+      recognitionInstance.continuous = true; // 모든 환경에서 연속 인식 활성화 (iOS에서도 true로 설정)
+      recognitionInstance.interimResults = true; // 모든 환경에서 중간 결과 사용 (iOS에서도 true로 설정)
       
       // 추가 설정
       if ('maxAlternatives' in recognitionInstance) {
@@ -1156,11 +1163,7 @@ export default function Home() {
         setMicPermissionGranted(true);
         // 상태 명시적 설정 - 즉시 실행
         setIsListening(true);
-        
-        // 사용자에게 시각적 피드백 - 마이크 상태 표시
-        if (!isListening) {
-          setIsListening(true);
-        }
+        document.body.classList.add('mic-active'); // body에 CSS 클래스 추가
       };
       
       // 결과 이벤트
@@ -1173,6 +1176,12 @@ export default function Home() {
           }
           
           console.log("음성 인식 결과 이벤트:", event);
+          
+          // 마이크 상태 재확인 - 결과가 왔음에도 상태가 비활성화되어 있다면 강제로 활성화
+          if (!isListening) {
+            console.log("결과가 수신되었지만 마이크 상태가 비활성화되어 있어 재활성화합니다.");
+            setIsListening(true);
+          }
           
           let finalTranscript = '';
           let hasInterimResult = false;
@@ -1203,19 +1212,6 @@ export default function Home() {
             setUserInput(finalTranscript);
             setAnswer(finalTranscript);
             
-            // 음성인식은 중지하지 않고 유지 - 모바일에서는 연속으로 인식되도록
-            if (!isMobile) {
-              // 데스크탑에서만 음성인식 객체 초기화
-              if (recognition) {
-                try {
-                  recognition.abort();
-                  setRecognition(null);
-                } catch (e) {
-                  console.error("결과 수신 후 음성인식 중지 중 오류:", e);
-                }
-              }
-            }
-            
             // 약간의 지연 후 자동 제출 (오디오 재생 완료를 위한 시간 확보)
             setTimeout(() => {
               if (!showResult) {
@@ -1224,34 +1220,43 @@ export default function Home() {
                 console.log('결과가 이미 표시 중입니다. 답변 처리를 건너뜁니다.');
                 setIsAnswerProcessing(false);
               }
-              
-              // 모바일에서는 마이크 상태 유지 (연속 인식 목적)
-              if (!isMobile) {
-                // 데스크탑에서만 약간의 지연 후 상태 업데이트
-                setTimeout(() => {
-                  setIsListening(false);
-                }, 200);
-              }
             }, 500); // 300ms에서 500ms로 증가하여 충분한 시간 확보
+            
+            // 모바일에서는 음성 인식 상태를 계속 활성화로 유지
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+              // 모바일에서는 음성 인식 결과가 있더라도 상태를 유지
+              setIsListening(true);
+            }
           } else if (hasInterimResult) {
             // 중간 결과가 있으면 사용자에게 표시만 하고 제출하지 않음
             console.log("중간 음성 인식 결과 감지됨");
+            // 중간 결과가 있어도 활성화 상태 유지
+            setIsListening(true);
           } else {
             console.warn("유효한 음성 인식 결과가 없습니다.");
           }
         } catch (error) {
           console.error("음성 인식 결과 처리 중 오류:", error);
-          // 오류 발생 시에도 일정 시간 후 상태 업데이트
-          setTimeout(() => {
+          // 오류 발생 시에도 모바일에서는 마이크 상태 유지
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+          if (isMobile) {
+            // 오류가 있어도 계속 활성 상태 유지
+            setIsListening(true);
+          } else {
+            // 데스크탑에서만 비활성화
             setIsListening(false);
-            setIsAnswerProcessing(false);
-          }, 200);
+          }
+          setIsAnswerProcessing(false);
         }
       };
       
-      // 오류 이벤트
+      // 오류 이벤트 
       recognitionInstance.onerror = (event: any) => {
         console.error("음성인식 오류:", event.error);
+        
+        // 모바일 환경에서는 대부분의 오류에도 마이크 상태 유지
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         
         // aborted 오류는 의도적인 중단이므로 오류 메시지 표시하지 않음
         if (event.error !== 'aborted') {
@@ -1261,24 +1266,33 @@ export default function Home() {
           if (isMobile) {
             if (event.error === 'no-speech') {
               errorMessage = '음성이 감지되지 않았습니다. 더 크게 말해보세요.';
+              // no-speech 오류는 무시하고 계속 활성화 상태 유지
+              setIsListening(true);
             } else if (event.error === 'network') {
               errorMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인하세요.';
             } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
               errorMessage = '마이크 권한이 거부되었습니다. 브라우저 설정에서 마이크 권한을 허용해주세요.';
               setMicPermissionGranted(false);
+              setIsListening(false); // 권한 오류는 비활성화
+            } else {
+              // 기타 오류도 모바일에서는 계속 활성화 유지
+              setIsListening(true);
             }
           }
           
+          // 치명적인 오류가 아니면 메시지 표시 시간 짧게
+          const isErrorFatal = event.error === 'not-allowed' || event.error === 'service-not-allowed'; 
+          
           setSpeechRecognitionError(errorMessage);
           
-          // 3초 후 오류 메시지 제거
+          // 지정된 시간 후 오류 메시지 제거
           setTimeout(() => {
             setSpeechRecognitionError(null);
-          }, 3000);
+          }, isErrorFatal ? 5000 : 2000); // 치명적 오류는 5초, 아니면 2초
         }
         
-        // 모바일에서 오류 발생시 처리 - 즉시 재시작 시도
-        if (isMobile && event.error === 'no-speech' && isListening && !isAnswerProcessing && !showResult) {
+        // 모바일에서 no-speech 오류 발생 시 자동 재시작
+        if (isMobile && event.error === 'no-speech' && !isAnswerProcessing && !showResult) {
           console.log("모바일에서 no-speech 오류 발생 - 음성인식 재시작 시도");
           
           // 기존 인스턴스 정리
@@ -1291,9 +1305,12 @@ export default function Home() {
             }
           }
           
+          // 마이크 상태 계속 유지
+          setIsListening(true);
+          
           // 일정 시간 후 재시작 시도
           setTimeout(() => {
-            if (isListening && !isAnswerProcessing && !showResult) {
+            if (!isAnswerProcessing && !showResult) {
               console.log("모바일에서 음성인식 재시작 시도");
               startSpeechRecognition();
             }
@@ -1302,11 +1319,20 @@ export default function Home() {
           return;
         }
         
-        // 다른 오류 발생 시 약간의 지연 후 상태 초기화
-        setTimeout(() => {
-          setIsListening(false);
-          setRecognition(null);
-        }, isMobile ? 300 : 0); // 모바일에서 지연 시간 증가
+        // 의도적인 중단(aborted)이나 모바일 환경이 아닌 경우에만 상태 변경
+        if (event.error === 'aborted' || !isMobile) {
+          setTimeout(() => {
+            setIsListening(false);
+            setRecognition(null);
+          }, isMobile ? 300 : 0);
+        } else {
+          // 모바일에서 의도적인 중단이 아닌 경우에는 상태 유지 및 재시작 시도
+          setTimeout(() => {
+            if (!isAnswerProcessing && !showResult) {
+              startSpeechRecognition();
+            }
+          }, 500);
+        }
       };
       
       // 종료 이벤트
@@ -1319,29 +1345,53 @@ export default function Home() {
           hasRecognition: !!recognition
         });
         
-        // 모바일에서 자동 재시작 시도
-        if (isMobile && isListening && !isAnswerProcessing && !showResult) {
-          console.log("모바일에서 음성인식 자동 종료 - 재시작 시도");
-          
-          // 기존 인스턴스 정리
+        // 사용자가 의도적으로 중지한 경우가 아니라면 재시작 시도
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // 결과 화면이 표시 중이거나 답변 처리 중이면 재시작하지 않음
+        if (showResult || isAnswerProcessing) {
+          console.log("결과 화면 표시 중이거나 답변 처리 중이므로 재시작하지 않음");
+          setIsListening(false);
           setRecognition(null);
-          
-          // 약간의 지연 후 재시작
-          setTimeout(() => {
-            if (isListening && !isAnswerProcessing && !showResult) {
-              console.log("모바일에서 음성인식 재시작");
-              startSpeechRecognition();
-            }
-          }, 300);
+          return;
+        }
+        
+        // 게임이 진행 중인 경우에만 재시작
+        if (gameState === 'playing' && !showResult) {
+          // 모바일에서는 항상 재시작 시도, 데스크탑에서는 isListening이 true인 경우에만 재시작 시도
+          if (isMobile || (isListening && !isMobile)) {
+            console.log("음성인식 자동 종료 - 재시작 시도");
+            
+            // 기존 인스턴스 정리
+            setRecognition(null);
+            
+            // 약간의 지연 후 재시작
+            setTimeout(() => {
+              if (!isAnswerProcessing && !showResult && gameState === 'playing') {
+                console.log("음성인식 재시작");
+                // 마이크 상태 유지 - 재시작 전에 미리 상태 설정
+                setIsListening(true);
+                startSpeechRecognition();
+              } else {
+                // 재시작 조건이 아니면 상태 초기화
+                setIsListening(false);
+              }
+            }, 300);
+          } else {
+            // 데스크탑에서 의도적 종료인 경우 상태 변경
+            console.log("음성인식 의도적 종료 - 상태 초기화");
+            setIsListening(false);
+            setRecognition(null);
+          }
         } else {
-          // 게임이 계속 진행 중이 아니거나 의도적 종료인 경우 상태 변경
-          console.log("음성인식 종료 - 상태 초기화");
+          // 게임이 진행 중이 아닌 경우 상태 초기화
+          console.log("게임이 진행 중이 아님 - 음성인식 상태 초기화");
           setIsListening(false);
           setRecognition(null);
         }
       };
       
-      // 전역 변수에 인스턴스 저장 (정지 버튼에서 사용)
+      // 전역 변수에 인스턴스 저장
       setRecognition(recognitionInstance);
       
       // 음성인식 시작
@@ -1354,11 +1404,24 @@ export default function Home() {
       } catch (startError) {
         console.error("음성인식 시작 요청 중 오류:", startError);
         
-        // 시작 실패 시 약간의 지연 후 상태 초기화
-        setTimeout(() => {
-          setIsListening(false);
-          setRecognition(null);
-        }, 200);
+        // 시작 실패 시에도 모바일에서는 재시도
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          setTimeout(() => {
+            if (!isAnswerProcessing && !showResult && gameState === 'playing') {
+              console.log("음성인식 시작 실패 후 재시도");
+              startSpeechRecognition();
+            } else {
+              setIsListening(false);
+            }
+          }, 500);
+        } else {
+          // 데스크탑에서는 그냥 상태 초기화
+          setTimeout(() => {
+            setIsListening(false);
+            setRecognition(null);
+          }, 200);
+        }
         
         setSpeechRecognitionError("음성 인식 시작에 실패했습니다. 다시 시도해주세요.");
       }
