@@ -345,6 +345,7 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // 클릭 처리 중 상태 추가
   const [timeLeft, setTimeLeft] = useState(15);
   const [name, setName] = useState("");
   const [hints, setHints] = useState<Record<string, boolean>>({}); // 힌트 표시 여부
@@ -880,6 +881,12 @@ export default function Home() {
   const handleSpeechRecognition = () => {
     console.log('음성 인식 버튼 클릭:', { hasRecognition: !!recognition, isListening });
     
+    // 처리 중일 때는 중복 클릭 방지
+    if (isProcessing) {
+      console.log('이미 처리 중입니다.');
+      return;
+    }
+    
     if (!processedCharacters || processedCharacters.length === 0) {
       alert('게임이 시작되지 않았습니다. 게임 시작 버튼을 클릭하세요.');
       return;
@@ -889,6 +896,9 @@ export default function Home() {
       alert('현재 결과가 표시 중입니다. 다음 문제로 넘어가려면 "다음 문제" 버튼을 클릭하세요.');
       return;
     }
+    
+    // 처리 시작
+    setIsProcessing(true);
     
     // 음성 인식 중이면 중지
     if (isListening && recognition) {
@@ -900,11 +910,21 @@ export default function Home() {
       } catch (error) {
         console.error("음성 인식 중지 중 오류:", error);
       }
+      
+      // 짧은 지연 후 처리 상태 해제
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 500);
     } 
     // 음성 인식 중이 아니면 시작
     else {
       console.log('음성 인식 시작 시도');
       startSpeechRecognition();
+      
+      // 짧은 지연 후 처리 상태 해제
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 800);
     }
   };
 
@@ -913,6 +933,7 @@ export default function Home() {
     // 이미 음성인식 중이면 중복 실행 방지
     if (isListening || recognition) {
       console.log('이미 음성인식 중입니다:', { isListening, hasRecognition: !!recognition });
+      setIsProcessing(false); // 처리 상태 해제
       return;
     }
     
@@ -921,6 +942,7 @@ export default function Home() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         setSpeechRecognitionError('이 브라우저는 음성 인식을 지원하지 않습니다.');
+        setIsProcessing(false); // 처리 상태 해제
         return;
       }
       
@@ -1664,22 +1686,22 @@ export default function Home() {
               
               {/* 음성 인식 UI */}
               <div className="flex flex-col items-center">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
                   onClick={handleSpeechRecognition}
-                  className={`w-16 h-16 rounded-full ${
+                  disabled={isProcessing} // 처리 중일 때 중복 클릭 방지
+                  className={`w-20 h-20 rounded-full ${
                     isListening 
-                      ? 'bg-red-500 hover:bg-red-600' 
-                      : 'bg-indigo-600 hover:bg-indigo-700'
-                  } text-white flex items-center justify-center shadow-lg transition-colors mb-3`}
+                      ? 'bg-red-500 active:bg-red-600' 
+                      : 'bg-indigo-600 active:bg-indigo-700'
+                  } text-white flex items-center justify-center shadow-lg transition-colors mb-3 touch-manipulation`}
+                  style={{ touchAction: 'manipulation' }}
                 >
                   {isListening ? (
-                    <FaMicrophoneSlash className="text-2xl" />
+                    <FaMicrophoneSlash className="text-3xl" />
                   ) : (
-                    <FaMicrophone className="text-2xl" />
+                    <FaMicrophone className="text-3xl" />
                   )}
-                </motion.button>
+                </button>
                 
                 <p className="text-gray-600 text-sm mb-2">
                   {isListening ? '말하는 중...' : '마이크를 탭하고 이름을 말하세요'}
