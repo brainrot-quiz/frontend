@@ -1447,9 +1447,9 @@ export default function Home() {
       
       {/* 인트로 화면 */}
       {gameState === 'intro' && (
-        <>
+        <div className="flex flex-col items-center space-y-8">
           <motion.section 
-            className="max-w-md mx-auto text-center bg-white p-8 rounded-xl shadow-lg"
+            className="max-w-md w-full mx-auto text-center bg-white p-8 rounded-xl shadow-lg mt-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -1502,11 +1502,11 @@ export default function Home() {
           </motion.section>
           
           {/* 방명록 섹션 */}
-          <section className="max-w-2xl mx-auto mt-16">
-            <h2 className="text-2xl font-semibold mb-6 text-indigo-700 text-center">Guestbook</h2>
+          <section className="max-w-2xl w-full mx-auto mt-4">
+            <h2 className="text-2xl font-semibold mb-4 text-indigo-700 text-center">Guestbook</h2>
             <Guestbook />
           </section>
-        </>
+        </div>
       )}
       
       {/* 게임 화면 */}
