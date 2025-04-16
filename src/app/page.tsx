@@ -370,9 +370,15 @@ export default function Home() {
   const [visitorCount, setVisitorCount] = useState<number>(13000);
   const visitedRef = useRef<boolean>(false);
   
-  // 타이머 참조 저장
+  // 참조 변수들 정의
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  
+  // 현재 재생 중인 TTS 오디오 객체 저장
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // 마지막 TTS 재생 시간 추적
+  const lastTtsPlayedRef = useRef<number>(0);
+  // 마지막 문제 전환 시간 추적
+  const lastQuestionChangeRef = useRef<number>(0);
+
   // 타이머 설정
   useEffect(() => {
     // 게임 종료 시 또는 컴포넌트 언마운트 시 실행될 정리 함수
@@ -536,13 +542,35 @@ export default function Home() {
   
   // 다음 문제로 이동 함수 수정
   const handleNext = () => {
+    const now = Date.now();
+    
+    // 0.5초 이내에 중복 호출 방지
+    if (now - lastQuestionChangeRef.current < 500) {
+      console.log("다음 문제로 이동 요청이 너무 빠릅니다. 무시됨.");
+      return;
+    }
+    
+    lastQuestionChangeRef.current = now;
+    
     // 현재 인식 중이면 중지
     if (recognition) {
       try {
         recognition.abort();
         setRecognition(null);
+        setIsListening(false);
       } catch (error) {
         console.error("다음 문제 이동 시 음성 인식 중지 오류:", error);
+      }
+    }
+    
+    // 재생 중인 TTS 중지
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      } catch (error) {
+        console.error("TTS 오디오 중지 중 오류:", error);
       }
     }
     
@@ -568,11 +596,12 @@ export default function Home() {
       setTtsPronounced(false);
       
       // 다음 문제로 넘어간 후 약간의 지연 후 자동으로 이름 TTS 재생
+      // 지연 시간을 늘려서 이전 작업이 모두 정리되도록 함
       setTimeout(() => {
         if (processedCharacters.length > nextIndex) {
           playTTS(processedCharacters[nextIndex]?.name || '');
         }
-      }, 500);
+      }, 800); // 500ms에서 800ms로 증가
     } else {
       // 모든 문제 완료 - 로깅 추가
       console.log("모든 문제 완료 - 게임 종료");
@@ -665,6 +694,29 @@ export default function Home() {
   // TTS 재생 함수 수정
   const playTTS = async (text: string) => {
     try {
+      const now = Date.now();
+      
+      // 0.8초 이내에 중복 호출 방지
+      if (now - lastTtsPlayedRef.current < 800) {
+        console.log("TTS 재생 요청이 너무 빠릅니다. 무시됨.");
+        return;
+      }
+      
+      // 재생 시간 업데이트
+      lastTtsPlayedRef.current = now;
+      
+      console.log("TTS 재생 시작:", text);
+      
+      // 이미 재생 중인 오디오가 있으면 중지
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        } catch (e) {
+          console.error("이전 TTS 오디오 중지 중 오류:", e);
+        }
+      }
+      
       // TTS 재생 중일 때는 음성인식 중지
       if (recognition) {
         try {
@@ -680,17 +732,28 @@ export default function Home() {
       if (url) {
         const audio = new Audio(url);
         
+        // 오디오 참조 저장
+        audioRef.current = audio;
+        
         // 오디오 재생 완료 이벤트 핸들러 추가
         audio.onended = () => {
           console.log("TTS 재생 완료");
           setTtsPronounced(true);
+          audioRef.current = null;
           // 자동 음성인식 시작 코드 제거 - 사용자가 직접 버튼을 눌러야만 시작됨
         };
         
-        audio.play();
+        // 오류 이벤트 핸들러 추가
+        audio.onerror = (e) => {
+          console.error("TTS 오디오 재생 오류:", e);
+          audioRef.current = null;
+        };
+        
+        await audio.play();
       }
     } catch (error) {
       console.error('TTS 재생 오류:', error);
+      audioRef.current = null;
     }
   };
   
@@ -740,6 +803,17 @@ export default function Home() {
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
+      }
+      
+      // TTS 재생 중이면 중지
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          audioRef.current = null;
+        } catch (error) {
+          console.error("정답 처리 중 TTS 중지 오류:", error);
+        }
       }
       
       if (!processedCharacters || processedCharacters.length === 0) {
@@ -823,6 +897,7 @@ export default function Home() {
         setUserInput('');
         setAnswer('');
         setIsCorrect(null);
+        setIsListening(false); // 명시적으로 음성 인식 상태 초기화
 
         // 현재 진행상황 로깅
         console.log(`문제 진행상황: ${currentCharacterIndex + 1}/${processedCharacters.length}, 정답여부: ${isUserCorrect}, 남은 목숨: ${isUserCorrect ? lives : lives - 1}`);
@@ -830,22 +905,25 @@ export default function Home() {
         // 다음 문제 또는 결과 화면으로 자동 이동
         if (isUserCorrect || lives > 1) {
           if (currentCharacterIndex < processedCharacters.length - 1) {
+            // 마지막 문제 전환 시간 기록
+            lastQuestionChangeRef.current = Date.now();
+            
             // 다음 문제로 이동
             console.log("다음 문제로 이동 처리 중...");
             const nextIndex = currentCharacterIndex + 1;
             setCurrentCharacterIndex(nextIndex);
             setTimeLeft(15);
             setShowHint(false);
-            setIsListening(false);
             setIsTimerRunning(true);
             
             // 다음 문제로 넘어간 후 약간의 지연 후 자동으로 이름 TTS 재생
+            // 지연 시간을 늘려서 이전 작업이 모두 정리되도록 함
             setTimeout(() => {
               if (processedCharacters.length > nextIndex) {
                 console.log(`다음 문제(${nextIndex + 1}/${processedCharacters.length}) TTS 재생`);
                 playTTS(processedCharacters[nextIndex]?.name || '');
               }
-            }, 300);
+            }, 800); // 300ms에서 800ms로 증가
           } else {
             // 모든 문제 완료 - 로깅 추가
             console.log("모든 문제 완료 - 결과 화면으로 이동");
