@@ -106,75 +106,243 @@ const QUIZ_CHARACTERS: FortuneCharacter[] = [
   },
   {
     id: 'tripi',
-    name: 'Tripi Tropi',
+    name: 'Trippi Troppi',
     imageUrl: '/characters/Trippi Troppi .webp',
     description: '빠른 헤엄, 파동, 해일, 고양이 음파, 물기 능력을 가진 캐릭터. 물속에서 자유자재로 움직이며 강력한 파동 공격이 가능합니다.'
   },
   {
     id: 'burbaloni',
-    name: 'Burbaloni Luliloli',
+    name: 'Burbaloni Lulilolli',
     imageUrl: '/characters/Burbaloni Lulilolli .webp',
     description: '수영을 잘하는 코코넛 안에 카피바라가 들어있는 캐릭터. 독특한 이중 구조로 보호받으며 친근한 성격을 가지고 있습니다.'
   },
   {
     id: 'cappuccino',
-    name: 'Cappuccino',
-    imageUrl: '/characters/Cappuccino .webp',
+    name: 'Cappuccino Assassino',
+    imageUrl: '/characters/Cappuccino Assassino .webp',
     description: '커피 능력을 가진 캐릭터로, 에너지와 각성 효과를 부여할 수 있습니다. 거품 폭발 공격과 따뜻한 힐링 능력도 보유했습니다.'
   },
   {
     id: 'frigo',
-    name: 'Frigo',
-    imageUrl: '/characters/Frigo .webp',
+    name: 'Frigo Camelo',
+    imageUrl: '/characters/Frigo Camelo .webp',
     description: '냉장고 형태의 캐릭터로 냉기 능력을 사용할 수 있습니다. 음식을 신선하게 보관하는 능력과 강력한 냉동 빔을 발사할 수 있습니다.'
   },
   {
     id: 'boneca',
-    name: 'Boneca',
-    imageUrl: '/characters/Boneca .webp',
+    name: 'Boneca Ambalabu',
+    imageUrl: '/characters/Boneca Ambalabu .webp',
     description: '인형 모양의 캐릭터로 다양한 장난감 능력을 사용합니다. 장난감 변신 능력과 귀여운 외모로 적의 공격을 회피할 수 있습니다.'
   },
   {
     id: 'bobrito',
-    name: 'Bobrito',
-    imageUrl: '/characters/Bobrito .webp',
+    name: 'Bobrito bandito',
+    imageUrl: '/characters/Bobrito bandito .webp',
     description: '부리토 형태의 캐릭터로 맛있는 음식 능력을 가졌습니다. 다양한 재료로 적을 혼란시키고 영양 가득한 치유력을 발휘합니다.'
   },
   {
     id: 'vaca',
-    name: 'Vaca',
-    imageUrl: '/characters/Vaca .webp',
+    name: 'La Vaca Saturno Saturnita',
+    imageUrl: '/characters/La Vaca Saturno Saturnita .webp',
     description: '젖소 캐릭터로 우유 발사와 소 특유의 울음소리 공격을 사용합니다. 영양 높은 우유로 아군을 회복시킬 수 있습니다.'
   },
   {
     id: 'tung',
-    name: 'Tung',
-    imageUrl: '/characters/Tung .webp',
+    name: 'Tung Tung Tung Tung Tung Tung Tung Tung Tung Sahur',
+    imageUrl: '/characters/Tung Tung Tung Tung Tung Tung Tung Tung Tung Sahur .webp',
     description: '강력한 타격 능력을 가진 캐릭터로 주먹 공격과 지진파 생성이 가능합니다. 단단한 방어력과 파괴적인 공격력이 특징입니다.'
   },
   {
     id: 'lirilì',
-    name: 'Lirilì',
-    imageUrl: '/characters/Lirilì .webp',
+    name: 'Lirilì Larilà',
+    imageUrl: '/characters/Lirilì Larilà .webp',
     description: '음악적 능력을 가진 캐릭터로 노래로 적을 매혹시키거나 아군에게 힘을 줄 수 있습니다. 다양한 음악 장르를 활용한 공격이 특기입니다.'
   },
   {
     id: 'brr',
-    name: 'Brr',
-    imageUrl: '/characters/Brr .webp',
+    name: 'Brr Brr Patapim',
+    imageUrl: '/characters/Brr Brr Patapim .webp',
     description: '추위와 관련된 능력을 가진 캐릭터로 얼음 공격과 눈보라 생성이 가능합니다. 차가운 기운으로 적의 움직임을 둔화시킵니다.'
   },
   {
-    id: 'bombini',
-    name: 'Bombini',
-    imageUrl: '/characters/Bombini .webp',
+    id: 'bombombini',
+    name: 'Bombombini Gusini',
+    imageUrl: '/characters/Bombombini Gusini .webp',
     description: '폭발 능력을 가진 꿀벌 캐릭터로 꿀 폭탄과 날카로운 침 공격을 사용합니다. 빠른 비행 능력과 폭발적인 공격력이 특징입니다.'
   },
   {
     id: 'chimpanzini',
-    name: 'Chimpanzini',
-    imageUrl: '/characters/Chimpanzini .webp',
+    name: 'Chimpanzini Bananini',
+    imageUrl: '/characters/Chimpanzini Bananini .webp',
     description: '침팬지 캐릭터로 뛰어난 민첩성과 나무 타기 능력을 가졌습니다. 바나나 던지기와 영리한 지능으로 문제를 해결합니다.'
+  },
+  {
+    id: 'glorbo',
+    name: 'Glorbo Fruttodrillo',
+    imageUrl: '/characters/Glorbo Fruttodrillo .webp',
+    description: '깨물기 능력을 가진 수박에 악어의 머리와 다리가 달린 캐릭터. 주로 늪지대에 서식하며, 몸무게는 304kg입니다.'
+  },
+  {
+    id: 'giraffa',
+    name: 'Girafa Celestre',
+    imageUrl: '/characters/Girafa Celestre .webp',
+    description: '수박씨를 초속 50km로 뱉는 능력을 가진 수박, 기린, 우주인을 모티브로 한 캐릭터입니다.'
+  },
+  {
+    id: 'tata',
+    name: 'Ta Ta Ta Ta Ta Ta Ta Ta Ta Ta Ta Sahur',
+    imageUrl: '/characters/Ta Ta Ta Ta Ta Ta Ta Ta Ta Ta Ta Sahur .webp',
+    description: '증기 생성, 굉장한 발차기 능력을 가진 주전자와 다리, 팔, 얼굴을 합성한 캐릭터. 항상 울상이며 슬플 때 주전자 입구에서 증기가 나옵니다.'
+  },
+  {
+    id: 'brii',
+    name: 'Brii Brii Bicus Dicus Bombicus',
+    imageUrl: '/characters/Brii Brii Bicus Dicus Bombicus .webp',
+    description: '검술 능력을 가진 켄투리오 복장을 하고 목에 산딸기를 두른 조류 캐릭터. 체구는 작지만 자존심이 매우 큽니다.'
+  },
+  {
+    id: 'talpa',
+    name: 'Talpa Di Ferro',
+    imageUrl: '/characters/Talpa Di Ferro .webp',
+    description: '주변 탐색, 스캔, 드릴 능력을 가진 몸 여러 부위가 기계화된 쥐 캐릭터. 눈과 이마에 스캔용 마이크로칩이 있고, 코에는 어떤 단단한 물체도 뚫을 수 있는 드릴이 있습니다.'
+  },
+  {
+    id: 'ballerina',
+    name: 'Ballerina Cappuccina',
+    imageUrl: '/characters/Ballerina Cappuccina .webp',
+    description: '발레 능력을 가진 머리는 카푸치노이며, 분홍색 치마를 입은 발레리나 캐릭터. Cappuccino Assassino의 아내로, 음악을 사랑합니다.'
+  },
+  {
+    id: 'blueberrinni',
+    name: 'Blueberrinni Octopussini',
+    imageUrl: '/characters/Blueberrinni Octopussini .webp',
+    description: '발판공격, 빠른 수영 능력을 가진 상반신이 블루베리인 문어 캐릭터. 블루베리만큼 작아서 공격을 피하기 쉽고, 해양의 신비로움을 상징합니다. 깊은 바다에서 나타나 마술 같은 푸른 잉크를 뿌립니다.'
+  },
+  {
+    id: 'bombardiere',
+    name: 'Bombardiere Lucertola',
+    imageUrl: '/characters/Bombardiere Lucertola .webp',
+    description: '폭격, 비행, 위장 능력을 가진 폭격기와 도마뱀을 합성한 캐릭터. Bombardiro Crocodillo를 업그레이드하는 과정에서 개발되었으며, 강한 파괴력과 빠른 움직임이 특징입니다.'
+  },
+  {
+    id: 'chef',
+    name: 'Chef Crabracadabra',
+    imageUrl: '/characters/Chef Crabracadabra .webp',
+    description: '마법의 요리를 만드는 게 셰프입니다. 저주의 요리 능력을 가진 게의 머리와 집게가 달린 요리사 캐릭터. 원래는 어부였으나 바다 마녀와의 계약 후 게가 되었습니다. 그의 집게발로 만든 요리는 맛뿐만 아니라 마법적인 효과도 가지고 있습니다.'
+  },
+  {
+    id: 'frulli',
+    name: 'Fruli Frula',
+    imageUrl: '/characters/Fruli Frula .webp',
+    description: '쪼기, 커피 마시기 능력을 가진 동그란 고글을 쓴 조류 캐릭터입니다. 곡식을 쪼아 먹는 것을 좋아하며, 항상 즐겁고 활기찬 에너지로 가득 차 있습니다. 다양한 색의 과일 조각들이 연상되는 독특한 외형을 가지고 있습니다.'
+  },
+  {
+    id: 'garamaraman',
+    name: 'Garamaraman dan Madudungdung tak tuntung perkuntung',
+    imageUrl: '/characters/Garamaraman dan Madudungdung tak tuntung perkuntung .webp',
+    description: '소금 통과 꿀단지에 사람의 얼굴과 발을 합성한 캐릭터. 소금 통의 이름은 가라마라만, 꿀 통의 이름은 만두둥둥입니다. 인도네시아 민속 이야기에서 영감을 받은 이 캐릭터는 복잡한 이름만큼 예측할 수 없는 행동으로 유명합니다.'
+  },
+  {
+    id: 'cacto',
+    name: 'Il Cacto Hipopotamo',
+    imageUrl: '/characters/Il Cacto Hipopotamo .webp',
+    description: '밟기 능력을 가진 선인장 몸통에 하마의 머리를 하고 샌들을 신고 있는 캐릭터입니다. 사막에서 생존력이 뛰어나며, 두꺼운 피부로 어떤 환경에서도 살아남을 수 있는 강인한 생명력을 가지고 있습니다.'
+  },
+  {
+    id: 'pothotspot',
+    name: 'Pot hotspot',
+    imageUrl: '/characters/Pot hotspot .webp',
+    description: '핫스팟 요청, 무한으로 과자 사먹기 능력을 가진 해골과 핸드폰, 와이파이를 합성한 캐릭터. "Hotspot bro"라는 말을 자주 합니다.'
+  },
+  {
+    id: 'svinino',
+    name: 'Svinino Bombondino',
+    imageUrl: '/characters/Svinino Bombondino .webp',
+    description: '자폭 능력을 가진 돼지와 폭탄을 합성한 캐릭터입니다. 폭발하면 주변에 사탕이 흩날립니다.'
+  },
+  {
+    id: 'trippatroppa',
+    name: 'Trippa Troppa Tralala Lirilì Rilà Tung Tung Sahur Boneca Tung Tung Tralalelo Trippi Troppa Crocodina',
+    imageUrl: '/characters/Trippa Troppa Tralala Lirilì Rilà Tung Tung Sahur Boneca Tung Tung Tralalelo Trippi Troppa Crocodina .webp',
+    description: '가장 유명한 캐릭터 6인방인 트리피 트로피, 트랄랄레로 트랄랄라, 리릴리 라릴라, 퉁 퉁 퉁 사후르, 보네카 암발라부, 봄바르디로 크로코딜로가 합쳐진 캐릭터로 Italian Brainrot의 최강자입니다.'
+  },
+  {
+    id: 'troppatrippa',
+    name: 'Troppa Trippa',
+    imageUrl: '/characters/Troppa Trippa.webp',
+    description: '뒤집힌 트로파 트리파 캐릭터로 세상을 거꾸로 보는 독특한 시각을 가지고 있습니다. 독특한 공간 인식 능력이 있습니다.'
+  },
+  {
+    id: 'trulimero',
+    name: 'Trulimero Trulicina',
+    imageUrl: '/characters/Trulimero Trulicina .webp',
+    description: '수영을 잘하는 물고기의 몸통에 고양이의 머리, 사람의 다리 4개가 붙어있는 캐릭터입니다. 다양한 환경에 적응이 가능합니다.'
+  },
+  {
+    id: 'blueberrinni',
+    name: 'Blueberrinni Octopussini',
+    imageUrl: '/characters/Blueberrinni Octopussini .webp',
+    description: '푸른 블루베리처럼 생긴 문어 캐릭터로, 해양의 신비로움을 상징합니다. 블루베리니는 깊은 바다에서 나타나 마술 같은 푸른 잉크를 뿌립니다.'
+  },
+  {
+    id: 'bombardiere',
+    name: 'Bombardiere Lucertola',
+    imageUrl: '/characters/Bombardiere Lucertola .webp',
+    description: '폭격 전문 도마뱀 캐릭터로, 전쟁의 혼란 속에서도 용기를 잃지 않는 모습을 보여줍니다. 강한 파괴력과 빠른 움직임이 특징입니다.'
+  },
+  {
+    id: 'chef',
+    name: 'Chef Crabracadabra',
+    imageUrl: '/characters/Chef Crabracadabra .webp',
+    description: '마법의 요리를 만드는 게 셰프입니다. 그의 집게발로 만든 요리는 맛뿐만 아니라 마법적인 효과도 가지고 있습니다. 심해의 비밀 재료로 최고의 요리를 선보입니다.'
+  },
+  {
+    id: 'frulli',
+    name: 'Fruli Frula',
+    imageUrl: '/characters/Fruli Frula .webp',
+    description: '과일 혼합 음료를 연상시키는 이 캐릭터는 항상 즐겁고 활기찬 에너지로 가득 차 있습니다. 다양한 색의 과일 조각들이 모여 만들어진 독특한 외형을 가지고 있습니다.'
+  },
+  {
+    id: 'garamaraman',
+    name: 'Garamaraman dan Madudungdung tak tuntung perkuntung',
+    imageUrl: '/characters/Garamaraman dan Madudungdung tak tuntung perkuntung .webp',
+    description: '긴 이름을 가진 신비로운 캐릭터로, 인도네시아 민속 이야기에서 영감을 받았습니다. 복잡한 이름만큼 복잡한 성격을 가지고 있으며, 예측할 수 없는 행동으로 유명합니다.'
+  },
+  {
+    id: 'cacto',
+    name: 'Il Cacto Hipopotamo',
+    imageUrl: '/characters/Il Cacto Hipopotamo .webp',
+    description: '선인장과 하마가 결합된 독특한 캐릭터로, 사막과 강을 오가며 살아갑니다. 두꺼운 피부로 어떤 환경에서도 살아남을 수 있는 강인한 생명력을 가지고 있습니다.'
+  },
+  {
+    id: 'pothotspot',
+    name: 'Pot hotspot',
+    imageUrl: '/characters/Pot hotspot .webp',
+    description: '끓어오르는 냄비 같은 모습의 이 캐릭터는 항상 뜨거운 아이디어로 가득 차 있습니다. 주변 사람들에게 영감과 에너지를 전달하는 능력이 있습니다.'
+  },
+  {
+    id: 'svinino',
+    name: 'Svinino Bombondino',
+    imageUrl: '/characters/Svinino Bombondino .webp',
+    description: '사탕처럼 달콤한 성격의 돼지 캐릭터로, 누구에게나 친절하고 상냥합니다. 그의 주변에는 항상 달콤한 향기가 감돌며, 우울한 마음도 달래줍니다.'
+  },
+  {
+    id: 'trippatroppa',
+    name: 'Trippa Troppa Tralala Lirilì Rilà Tung Tung Sahur Boneca Tung Tung Tralalelo Trippi Troppa Crocodina',
+    imageUrl: '/characters/Trippa Troppa Tralala Lirilì Rilà Tung Tung Sahur Boneca Tung Tung Tralalelo Trippi Troppa Crocodina .webp',
+    description: '가장 긴 이름을 가진 전설적인 캐릭터로, 모든 인기 캐릭터의 특성을 조합한 궁극의 존재입니다. 그의 이름을 완벽하게 외울 수 있는 사람은 거의 없을 정도로 복잡합니다.'
+  },
+  {
+    id: 'trulimero',
+    name: 'Trulimero Trulicina',
+    imageUrl: '/characters/Trulimero Trulicina .webp',
+    description: '동화 속에서 튀어나온 듯한 몽환적인 분위기의 캐릭터로, 노래하는 것을 좋아하며 마법의 멜로디로 사람들의 마음을 사로잡습니다.'
+  },
+  {
+    id: 'troppatrippa',
+    name: 'Troppa Trippa',
+    imageUrl: '/characters/Troppa Trippa.webp',
+    description: '식탐이 많은 이 캐릭터는 항상 배가 고픈 상태입니다. 어떤 음식이든 맛있게 먹어치우는 능력이 있으며, 먹을수록 더 행복해지는 특징이 있습니다.'
   }
 ];
 
@@ -185,11 +353,17 @@ const CHARACTER_RANKS = {
   'bombardiro': 'GOATED',
   'lirilì': 'GOATED',
   'tung': 'GOATED',
+  'trippatroppa': 'GOATED',
   
   // GREAT 랭크
   'brr': 'GREAT',
-  'bombini': 'GREAT',
+  'bombombini': 'GREAT',  // 'bombini'에서 'bombombini'로 수정
   'chimpanzini': 'GREAT',
+  'ballerina': 'GREAT',
+  'talpa': 'GREAT',
+  'bombardiere': 'GREAT',
+  'chef': 'GREAT',
+  'blueberrinni': 'GREAT',
   
   // GOOD 랭크
   'vaca': 'GOOD',
@@ -197,27 +371,30 @@ const CHARACTER_RANKS = {
   'boneca': 'GOOD',
   'cappuccino': 'GOOD',
   'frigo': 'GOOD',
+  'giraffa': 'GOOD',
+  'tata': 'GOOD',
+  'svinino': 'GOOD',
+  'troppatrippa': 'GOOD',
+  'trulimero': 'GOOD',
   
   // MID 랭크
   'burbaloni': 'MID',
   'glorbo': 'MID',
-  'trulimero': 'MID',
   'bobrito': 'MID',
   'cacto': 'MID',
   'frulli': 'MID',
+  'brii': 'MID',
+  'pothotspot': 'MID',
+  'garamaraman': 'MID',
   
   // MEH 랭크
-  'garamaraman': 'MEH',
   'crocodildo': 'MEH',
   'bananitta': 'MEH',
   'udin': 'MEH',
-  'brii': 'MEH',
-  'blueberrinni': 'MEH',
   'fake tripi': 'MEH',
   'tigrulini': 'MEH',
   'tralalero talalma': 'MEH',
   'trenostruzzo': 'MEH',
-  'giraffa': 'MEH',
   
   // BAD 랭크
   'bambini': 'BAD',
@@ -860,23 +1037,25 @@ export default function Fortune() {
               <div className="bg-purple-50 rounded-lg p-4 mb-4 flex items-center">
                 <div className="w-12 h-12 rounded-full overflow-hidden mr-3 flex-shrink-0 border-2 border-purple-200">
                   {fortune.character?.imageUrl ? (
-                    <img
-                      src={fortune.character.imageUrl}
-                      alt={fortune.character.name || '운세 캐릭터'}
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <img
+                        src={fortune.character.imageUrl}
+                        alt={fortune.character.name || '운세 캐릭터'}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                       <span className="text-xl">{fortune.emoji}</span>
                     </div>
                   )}
                 </div>
-                <div className="text-left">
-                  <div className="flex items-center">
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${getRankBadgeStyle(fortune.rank)} text-white mr-2`}>
+                <div className="text-left overflow-hidden flex-1">
+                  <div className="flex items-center mb-1">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${getRankBadgeStyle(fortune.rank)} text-white mr-2 flex-shrink-0`}>
                       {fortune.rank}
                     </span>
-                    <span className="text-xs text-gray-500 truncate">{fortune.character?.name}</span>
+                    <span className="text-xs text-gray-500 truncate max-w-full block">{fortune.character?.name}</span>
                   </div>
                   <p className="text-sm text-gray-700 truncate">{fortune.message.substring(0, 30)}...</p>
                 </div>
@@ -924,6 +1103,7 @@ export default function Fortune() {
           
           <div className="p-6 md:p-8 text-center">
             <div className="relative">
+              {/* 캐릭터 이미지 */}
               <div className="w-40 h-40 mx-auto mb-6 relative rounded-full overflow-hidden border-4 shadow-lg"
                 style={{ 
                   borderColor: `${fortune.rank === 'GOATED' ? '#FFD700' : (fortune.rank === 'GREAT' ? '#FFA500' : (fortune.rank === 'GOOD' ? '#4CAF50' : (fortune.rank === 'TERRIBLE' ? '#FF2D55' : '#6366F1')))}`,
@@ -931,17 +1111,20 @@ export default function Fortune() {
                 }}
               >
                 {fortune.character?.imageUrl ? (
-                  <img
-                    src={fortune.character.imageUrl}
-                    alt={fortune.character.name || '운세 캐릭터'}
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <img
+                      src={fortune.character.imageUrl}
+                      alt={fortune.character.name || '운세 캐릭터'}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <span className="text-4xl">{fortune.emoji}</span>
                   </div>
                 )}
                 
+                {/* 랭크 뱃지 */}
                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white px-3 py-1 rounded-full shadow-md border"
                   style={{ 
                     borderColor: `${fortune.rank === 'GOATED' ? '#FFD700' : (fortune.rank === 'GREAT' ? '#FFA500' : (fortune.rank === 'GOOD' ? '#4CAF50' : (fortune.rank === 'TERRIBLE' ? '#FF2D55' : '#6366F1')))}`,
@@ -953,106 +1136,109 @@ export default function Fortune() {
                 </div>
               </div>
             
-              <h2 className="text-xl md:text-2xl font-bold mb-2 text-purple-800">{fortune.character?.name || '미스테리 캐릭터'}</h2>
-              <p className="text-sm text-gray-500 mb-4">{getRankDescription(fortune.rank)}</p>
-            </div>
-            
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl mb-6 shadow-inner">
-              <p className="text-lg md:text-xl leading-relaxed text-gray-800">{fortune.message}</p>
-            </div>
-            
-            <div className="flex flex-col md:flex-row md:space-x-4 gap-3 md:gap-0 justify-center">
-              <motion.button
-                whileHover={{ scale: 1.03, boxShadow: "0 4px 15px -3px rgba(146, 64, 213, 0.4)" }}
-                whileTap={{ scale: 0.97 }}
-                onClick={handleShare}
-                disabled={isSharing}
-                className={`${
-                  isSharing ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
-                } text-white px-6 py-3 rounded-lg text-lg font-medium shadow-md transition-all flex-1 flex items-center justify-center gap-2`}
-              >
-                {isSharing ? (
-                  <>
-                    <span className="animate-pulse">공유 중...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                    </svg>
-                    <span>인스타에 공유하기</span>
-                  </>
-                )}
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => {
-                  if (pulledThisSession && remainingPulls > 0) {
-                    // 이번 세션에 뽑기를 했고 남은 뽑기가 있으면 뽑기 화면으로
-                    setShowFortuneResult(false);
-                  } else if (remainingPulls > 0) {
-                    // 이번 세션에 뽑기를 안했고 남은 뽑기가 있으면 바로 뽑기 실행
-                    pullFortune();
-                  } else {
-                    // 남은 뽑기가 없으면 뽑기 화면으로
-                    setShowFortuneResult(false);
-                  }
-                }}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg text-lg font-medium shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                {remainingPulls > 0 ? (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1z" clipRule="evenodd" />
-                      <path fillRule="evenodd" d="M10.146 8.746a.5.5 0 01.708 0l3 3a.5.5 0 010 .708l-3 3a.5.5 0 11-.708-.708L12.793 12l-2.647-2.646a.5.5 0 010-.708z" clipRule="evenodd" />
-                    </svg>
-                    <span>{pulledThisSession ? "다시 뽑기" : "새 운세 뽑기"}</span>
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                    </svg>
-                    <span>돌아가기</span>
-                  </>
-                )}
-              </motion.button>
-            </div>
-            
-            <p className="mt-6 text-sm text-gray-500">
-              {remainingPulls > 0 ? (
-                <span>오늘 남은 뽑기: <span className="font-semibold text-purple-600">{remainingPulls}회</span></span>
-              ) : (
-                <span>내일 다시 찾아오세요!</span>
-              )}
-            </p>
-            
-            {fortune.rank === 'GOATED' && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="mt-4 bg-yellow-50 border border-yellow-200 p-3 rounded-lg text-sm text-yellow-800"
-              >
-                <span className="font-bold">축하합니다!</span> 가장 희귀한 GOATED 등급 캐릭터를 뽑으셨습니다! 🎉
-              </motion.div>
-            )}
-            
-            {/* 캐릭터 정보 추가 */}
-            {fortune.character && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-bold mb-2 text-purple-800">캐릭터 정보</h3>
-                <p className="text-gray-700 mb-4">{fortune.character.description}</p>
-                <Link href="/characters" className="text-purple-600 hover:text-purple-800 font-medium bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-lg transition-all inline-flex items-center">
-                  <span>모든 캐릭터 보기</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
+              {/* 캐릭터 이름과 설명 */}
+              <div className="mb-4">
+                <h2 className="text-xl md:text-2xl font-bold mb-2 text-purple-800 break-words px-4">{fortune.character?.name || '미스테리 캐릭터'}</h2>
+                <p className="text-sm text-gray-500 mb-4">{getRankDescription(fortune.rank)}</p>
               </div>
-            )}
+
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-5 rounded-xl mb-6 shadow-inner">
+                <p className="text-lg md:text-xl leading-relaxed text-gray-800">{fortune.message}</p>
+              </div>
+            
+              <div className="flex flex-col md:flex-row md:space-x-4 gap-3 md:gap-0 justify-center">
+                <motion.button
+                  whileHover={{ scale: 1.03, boxShadow: "0 4px 15px -3px rgba(146, 64, 213, 0.4)" }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleShare}
+                  disabled={isSharing}
+                  className={`${
+                    isSharing ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
+                  } text-white px-6 py-3 rounded-lg text-lg font-medium shadow-md transition-all flex-1 flex items-center justify-center gap-2`}
+                >
+                  {isSharing ? (
+                    <>
+                      <span className="animate-pulse">공유 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                      </svg>
+                      <span>인스타에 공유하기</span>
+                    </>
+                  )}
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    if (pulledThisSession && remainingPulls > 0) {
+                      // 이번 세션에 뽑기를 했고 남은 뽑기가 있으면 뽑기 화면으로
+                      setShowFortuneResult(false);
+                    } else if (remainingPulls > 0) {
+                      // 이번 세션에 뽑기를 안했고 남은 뽑기가 있으면 바로 뽑기 실행
+                      pullFortune();
+                    } else {
+                      // 남은 뽑기가 없으면 뽑기 화면으로
+                      setShowFortuneResult(false);
+                    }
+                  }}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg text-lg font-medium shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  {remainingPulls > 0 ? (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M10.146 8.746a.5.5 0 01.708 0l3 3a.5.5 0 010 .708l-3 3a.5.5 0 11-.708-.708L12.793 12l-2.647-2.646a.5.5 0 010-.708z" clipRule="evenodd" />
+                      </svg>
+                      <span>{pulledThisSession ? "다시 뽑기" : "새 운세 뽑기"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                      </svg>
+                      <span>돌아가기</span>
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            
+              <p className="mt-6 text-sm text-gray-500">
+                {remainingPulls > 0 ? (
+                  <span>오늘 남은 뽑기: <span className="font-semibold text-purple-600">{remainingPulls}회</span></span>
+                ) : (
+                  <span>내일 다시 찾아오세요!</span>
+                )}
+              </p>
+            
+              {fortune.rank === 'GOATED' && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.5 }}
+                  className="mt-4 bg-yellow-50 border border-yellow-200 p-3 rounded-lg text-sm text-yellow-800"
+                >
+                  <span className="font-bold">축하합니다!</span> 가장 희귀한 GOATED 등급 캐릭터를 뽑으셨습니다! 🎉
+                </motion.div>
+              )}
+            
+              {/* 캐릭터 정보 추가 */}
+              {fortune.character && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h3 className="text-lg font-bold mb-2 text-purple-800">캐릭터 정보</h3>
+                  <p className="text-gray-700 mb-4">{fortune.character.description}</p>
+                  <Link href="/characters" className="text-purple-600 hover:text-purple-800 font-medium bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-lg transition-all inline-flex items-center">
+                    <span>모든 캐릭터 보기</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       ) : (
