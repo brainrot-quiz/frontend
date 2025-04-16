@@ -347,6 +347,7 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false); // 클릭 처리 중 상태 추가
   const [micPermissionGranted, setMicPermissionGranted] = useState(false); // 마이크 권한 상태 추가
+  const [isAnswerProcessing, setIsAnswerProcessing] = useState(false); // 답변 처리 중 상태 추가
   const [timeLeft, setTimeLeft] = useState(15);
   const [name, setName] = useState("");
   const [hints, setHints] = useState<Record<string, boolean>>({}); // 힌트 표시 여부
@@ -798,6 +799,15 @@ export default function Home() {
   // 음성인식 정답 처리 함수 수정
   const handleAnswer = (userInput: string) => {
     try {
+      console.log("정답 처리 시작:", userInput);
+      
+      // 이미 결과가 표시 중이면 처리 중단
+      if (showResult) {
+        console.log("이미 결과가 표시 중입니다. 정답 처리를 중단합니다.");
+        setIsAnswerProcessing(false);
+        return;
+      }
+      
       // 타이머 정지
       setIsTimerRunning(false);
       if (timerRef.current) {
@@ -818,17 +828,20 @@ export default function Home() {
       
       if (!processedCharacters || processedCharacters.length === 0) {
         console.error("처리된 캐릭터가 없습니다");
+        setIsAnswerProcessing(false);
         return;
       }
 
       if (currentCharacterIndex < 0 || currentCharacterIndex >= processedCharacters.length) {
         console.error("현재 캐릭터 인덱스가 범위를 벗어났습니다:", currentCharacterIndex, "전체 캐릭터 수:", processedCharacters.length);
+        setIsAnswerProcessing(false);
         return;
       }
 
       const currentCharacter = processedCharacters[currentCharacterIndex];
       if (!currentCharacter || !currentCharacter.name) {
         console.error("현재 캐릭터 정보를 찾을 수 없습니다", currentCharacter);
+        setIsAnswerProcessing(false);
         return;
       }
 
@@ -838,6 +851,8 @@ export default function Home() {
       const distance = levenshteinDistance(userInput.toLowerCase(), currentCharacter.name.toLowerCase());
       const maxDistance = Math.floor(currentCharacter.name.length * 0.9); // 이름 길이의 90%까지 오차 허용(10%만 맞으면 정답)
       const isUserCorrect = distance <= maxDistance;
+
+      console.log(`Levenshtein 거리: ${distance}, 최대 허용 거리: ${maxDistance}, 정답 여부: ${isUserCorrect}`);
 
       // 점수 계산
       const accuracyPercentage = Math.max(0, 100 - (distance / currentCharacter.name.length) * 100);
@@ -874,6 +889,13 @@ export default function Home() {
         characterName: currentCharacter.name
       };
 
+      // 효과음 재생
+      if (isUserCorrect) {
+        playSuccessSound();
+      } else {
+        playFailureSound();
+      }
+
       setLastResult(result);
       setQuizResults(prev => [...prev, result]);
       setIsCorrect(isUserCorrect);
@@ -890,9 +912,24 @@ export default function Home() {
         setStreak(0);
       }
 
+      // 현재 인식 중이면 중지
+      if (recognition) {
+        try {
+          recognition.abort();
+          setRecognition(null);
+        } catch (error) {
+          console.error("정답 처리 중 음성 인식 중지 오류:", error);
+        }
+      }
+      
       // 결과 표시 후 다음 문제 또는 게임 종료 처리
+      // 지연 시간을 1초로 늘려 모바일에서 결과를 충분히 볼 수 있도록 함
       setTimeout(() => {
         console.log("다음 문제로 진행 시작, showResult:", showResult);
+        
+        // 답변 처리 상태 해제
+        setIsAnswerProcessing(false);
+        
         setShowResult(false);
         setUserInput('');
         setAnswer('');
@@ -923,7 +960,7 @@ export default function Home() {
                 console.log(`다음 문제(${nextIndex + 1}/${processedCharacters.length}) TTS 재생`);
                 playTTS(processedCharacters[nextIndex]?.name || '');
               }
-            }, 800); // 300ms에서 800ms로 증가
+            }, 1000); // 800ms에서 1000ms로 증가
           } else {
             // 모든 문제 완료 - 로깅 추가
             console.log("모든 문제 완료 - 결과 화면으로 이동");
@@ -950,9 +987,10 @@ export default function Home() {
           setShowRankingForm(true);
           console.log("showRankingForm을 true로 설정:", true);
         }
-      }, 500);
+      }, 1000); // 500ms에서 1000ms로 증가
     } catch (error) {
       console.error("정답 처리 중 오류 발생:", error);
+      setIsAnswerProcessing(false);
     }
   };
 
@@ -1035,6 +1073,12 @@ export default function Home() {
       return;
     }
     
+    // 이미 답변 처리 중이면 막기
+    if (isAnswerProcessing) {
+      console.log('이미 답변 처리 중입니다. 음성 인식 시작을 무시합니다.');
+      return;
+    }
+    
     try {
       // 브라우저 음성인식 지원 여부 확인
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1066,12 +1110,19 @@ export default function Home() {
         console.log("음성인식 시작됨");
         // 마이크 권한 획득 표시
         setMicPermissionGranted(true);
-        // UI 상태가 이미 설정되어 있으므로 추가 설정 없음
+        // 상태 명시적 설정
+        setIsListening(true);
       };
       
       // 결과 이벤트
       recognitionInstance.onresult = (event: any) => {
         try {
+          // 이미 답변 처리 중이면 무시
+          if (isAnswerProcessing) {
+            console.log('이미 답변 처리 중입니다. 추가 결과를 무시합니다.');
+            return;
+          }
+          
           console.log("음성 인식 결과 이벤트:", event);
           
           let finalTranscript = '';
@@ -1092,6 +1143,9 @@ export default function Home() {
           console.log("최종 인식된 음성:", finalTranscript);
           
           if (finalTranscript) {
+            // 답변 처리 중 상태로 설정
+            setIsAnswerProcessing(true);
+            
             // 음성 인식 결과 처리
             setUserInput(finalTranscript);
             setAnswer(finalTranscript);
@@ -1106,17 +1160,21 @@ export default function Home() {
             }
             setRecognition(null);
             
-            // 약간의 지연 후 자동 제출
+            // 약간의 지연 후 자동 제출 (오디오 재생 완료를 위한 시간 확보)
             setTimeout(() => {
               if (!showResult) {
                 handleAnswer(finalTranscript);
+              } else {
+                // 이미 결과가
+                console.log('결과가 이미 표시 중입니다. 답변 처리를 건너뜁니다.');
+                setIsAnswerProcessing(false);
               }
               
               // 약간의 지연 후 상태 업데이트
               setTimeout(() => {
                 setIsListening(false);
               }, 200);
-            }, 200);
+            }, 300);
           } else {
             console.warn("유효한 음성 인식 결과가 없습니다.");
           }
@@ -1125,6 +1183,7 @@ export default function Home() {
           // 오류 발생 시에도 일정 시간 후 상태 업데이트
           setTimeout(() => {
             setIsListening(false);
+            setIsAnswerProcessing(false);
           }, 200);
         }
       };
