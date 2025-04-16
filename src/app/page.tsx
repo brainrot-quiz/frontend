@@ -1126,6 +1126,9 @@ export default function Home() {
     }, 500);
   };
 
+  // 모바일 기기 감지
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
   // 음성인식 시작 함수 개선
   const startSpeechRecognition = () => {
     console.log('startSpeechRecognition 호출됨 - timestamp:', Date.now());
@@ -1235,6 +1238,32 @@ export default function Home() {
       recognitionInstance.onresult = (event: any) => {
         try {
           console.log("음성 인식 결과 이벤트:", event, "timestamp:", Date.now());
+          
+          // 모바일용 특수 처리
+          if (isMobile) {
+            const transcript = event.results[0][0].transcript;
+            console.log("인식된 음성(모바일):", transcript);
+            
+            // 즉시 상태 업데이트
+            setUserInput(transcript);
+            setIsListening(false); // 즉시 마이크 상태 해제
+            
+            // 타이머 사용하여 인식 객체 정리 (지연 처리)
+            setTimeout(() => {
+              if (recognition) {
+                try {
+                  recognition.abort();
+                  setRecognition(null);
+                } catch (e) {
+                  console.error("모바일 음성인식 정리 중 오류:", e);
+                }
+              }
+              
+              // 답변 처리
+              handleAnswer(transcript);
+            }, 100);
+            return;
+          }
           
           // 이미 답변 처리 중이면 무시
           if (isAnswerProcessing) {
@@ -1405,6 +1434,14 @@ export default function Home() {
           hasRecognition: !!recognition,
           gameState
         });
+        
+        // 모바일에서는 즉시 상태 초기화
+        if (isMobile) {
+          console.log("모바일 환경 - 음성인식 종료 시 즉시 상태 초기화");
+          setIsListening(false);
+          setRecognition(null);
+          return;
+        }
         
         // 결과 화면이 표시 중이거나 정답 처리 중인 경우 마이크 즉시 비활성화
         if (showResult || isAnswerProcessing) {
@@ -1885,6 +1922,31 @@ export default function Home() {
 
   // 상태 추가
   const [showPermissionButton, setShowPermissionButton] = useState(false);
+
+  // 음성 인식 시작 시 타임아웃 설정
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (isListening) {
+      // 10초 후에 자동으로 음성 인식 중지
+      timeoutId = setTimeout(() => {
+        console.log("음성 인식 타임아웃 - 자동 중지");
+        if (recognition) {
+          try {
+            recognition.abort();
+          } catch (e) {
+            console.error("타임아웃 중지 중 오류:", e);
+          }
+        }
+        setIsListening(false);
+        setRecognition(null);
+      }, 10000);
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isListening, recognition]);
 
   return (
     <main className="min-h-screen p-4 md:p-8 bg-gradient-to-b from-blue-50 to-indigo-100">
