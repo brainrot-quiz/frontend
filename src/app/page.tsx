@@ -336,6 +336,19 @@ const playFailureSound = () => {
   audio.play().catch(err => console.error('오디오 재생 오류:', err));
 };
 
+// 브라우저 SpeechRecognition 초기화 함수 분리 (코드 상단에 추가)
+const createSpeechRecognition = () => {
+  if (typeof window === 'undefined') return null;
+  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.error('이 브라우저는 SpeechRecognition API를 지원하지 않습니다.');
+    return null;
+  }
+  
+  return SpeechRecognition;
+};
+
 export default function Home() {
   // 게임 상태 관련 state
   const [gameState, setGameState] = useState<'intro' | 'playing' | 'results'>('intro');
@@ -1021,7 +1034,7 @@ export default function Home() {
     if (isListening) {
       console.log('음성 인식 중지 시도');
       
-      // UI 상태 업데이트 즉시 수행 (모바일에서 지연 없이)
+      // UI 상태 업데이트 즉시 수행
       setIsListening(false);
       
       // 실제 중지 작업 즉시 실행
@@ -1044,8 +1057,8 @@ export default function Home() {
       setIsListening(true);
       
       // 브라우저 음성인식 지원 여부 확인 후 시작
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
+      const SpeechRecognitionAPI = createSpeechRecognition();
+      if (!SpeechRecognitionAPI) {
         setSpeechRecognitionError('이 브라우저는 음성 인식을 지원하지 않습니다.');
         setIsListening(false);
         setIsProcessing(false);
@@ -1053,7 +1066,13 @@ export default function Home() {
       }
       
       // 음성 인식 시작
-      startSpeechRecognition();
+      try {
+        startSpeechRecognition();
+      } catch (error) {
+        console.error('음성 인식 시작 실패:', error);
+        setIsListening(false);
+        setSpeechRecognitionError('음성 인식을 시작할 수 없습니다. 다시 시도해주세요.');
+      }
     }
     
     // 짧은 지연 후 처리 상태 해제
@@ -1062,17 +1081,31 @@ export default function Home() {
     }, 500); // 800ms에서 500ms로 감소
   };
 
-  // 음성인식 시작 함수
+  // 음성인식 시작 함수 개선
   const startSpeechRecognition = () => {
-    // 이미 음성인식 객체가 있으면 중복 실행 방지
-    if (recognition) {
-      console.log('이미 음성인식 객체가 존재합니다:', { hasRecognition: !!recognition });
+    console.log('startSpeechRecognition 호출됨');
+    
+    // 음성 인식이 이미 활성화된 경우 무시
+    if (isListening && recognition) {
+      console.log('이미 음성인식이 활성화되어 있습니다');
       return;
+    }
+    
+    // 이미 음성인식 객체가 있으면 정리
+    if (recognition) {
+      try {
+        console.log('기존 음성인식 객체 정리');
+        recognition.abort();
+        setRecognition(null);
+      } catch (error) {
+        console.error('기존 음성인식 객체 정리 중 오류:', error);
+      }
     }
     
     // 이미 답변 처리 중이면 막기
     if (isAnswerProcessing) {
       console.log('이미 답변 처리 중입니다. 음성 인식 시작을 무시합니다.');
+      setIsListening(false);
       return;
     }
     
@@ -1086,9 +1119,13 @@ export default function Home() {
         return;
       }
       
-      // 모바일 디바이스 감지 및 활성화 상태 로깅
+      // 모바일 디바이스 감지 및 iOS Safari 감지
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      console.log(`음성인식 시작 - 디바이스 타입: ${isMobile ? '모바일' : '데스크탑'}, 현재 상태:`, { 
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isIOSSafari = isIOS && isSafari;
+      
+      console.log(`음성인식 시작 - 디바이스: ${isMobile ? '모바일' : '데스크탑'}, iOS Safari: ${isIOSSafari}, 현재 상태:`, { 
         isListening, 
         isProcessing, 
         isAnswerProcessing, 
@@ -1097,12 +1134,15 @@ export default function Home() {
         gameState
       });
       
+      // 마이크 상태 명확히 설정 - 인스턴스 생성 전에 UI 업데이트
+      setIsListening(true);
+      
       const recognitionInstance = new SpeechRecognition();
       
       // 기본 설정
       recognitionInstance.lang = 'it-IT'; // 이탈리아어 인식
-      recognitionInstance.continuous = true; // 모든 환경에서 연속 인식 활성화
-      recognitionInstance.interimResults = true; // 모든 환경에서 중간 결과 사용
+      recognitionInstance.continuous = !isIOSSafari; // iOS Safari를 제외한 환경에서 연속 인식 활성화
+      recognitionInstance.interimResults = !isIOSSafari; // iOS Safari를 제외한 환경에서 중간 결과 사용
       
       // 추가 설정
       if ('maxAlternatives' in recognitionInstance) {
@@ -1116,6 +1156,11 @@ export default function Home() {
         setMicPermissionGranted(true);
         // 상태 명시적 설정 - 즉시 실행
         setIsListening(true);
+        
+        // 사용자에게 시각적 피드백 - 마이크 상태 표시
+        if (!isListening) {
+          setIsListening(true);
+        }
       };
       
       // 결과 이벤트
@@ -1303,6 +1348,9 @@ export default function Home() {
       try {
         recognitionInstance.start();
         console.log("음성인식 시작 요청됨");
+        
+        // UI 상태 강제 업데이트
+        setIsListening(true);
       } catch (startError) {
         console.error("음성인식 시작 요청 중 오류:", startError);
         
@@ -1957,24 +2005,28 @@ export default function Home() {
                   disabled={isProcessing} // 처리 중일 때 중복 클릭 방지
                   className={`w-20 h-20 rounded-full ${
                     isListening 
-                      ? 'bg-red-500 active:bg-red-600' 
-                      : 'bg-indigo-600 active:bg-indigo-700'
-                  } text-white flex items-center justify-center shadow-lg transition-colors mb-3 touch-manipulation`}
+                      ? 'bg-red-500 animate-pulse shadow-red-400/50 shadow-lg' 
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                  } text-white flex items-center justify-center transition-all duration-300 mb-3 touch-manipulation focus:outline-none focus:ring-2 focus:ring-offset-2 ${isListening ? 'focus:ring-red-500' : 'focus:ring-indigo-500'}`}
                   style={{ 
                     touchAction: 'manipulation',
                     WebkitUserSelect: 'none',
-                    WebkitTapHighlightColor: 'transparent'
+                    WebkitTapHighlightColor: 'transparent',
+                    transition: 'all 0.2s ease'
                   }}
+                  aria-label={isListening ? '마이크 중지' : '마이크 시작'}
                 >
                   {isListening ? (
-                    <FaMicrophoneSlash className="text-3xl" />
+                    <FaMicrophone className="text-3xl animate-pulse" />
                   ) : (
                     <FaMicrophone className="text-3xl" />
                   )}
                 </button>
                 
                 <p className="text-gray-600 text-sm mb-2">
-                  {isListening ? '말하는 중...' : '마이크를 탭하고 이름을 말하세요'}
+                  {isListening 
+                    ? <span className="flex items-center"><span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>말하는 중...</span>
+                    : '마이크를 탭하고 이름을 말하세요'}
                 </p>
                 
                 {userInput && (
