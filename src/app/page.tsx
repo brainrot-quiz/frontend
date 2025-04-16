@@ -1443,22 +1443,7 @@ export default function Home() {
       )}
       
       {/* 오류 메시지 */}
-      {loadError && (
-        <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg text-center mb-8">
-          <p className="text-red-500 mb-4">캐릭터 데이터를 불러오는 중 오류가 발생했습니다.</p>
-          <p className="text-gray-600 mb-4">다시 시도하거나 기본 캐릭터로 시작할 수 있습니다.</p>
-          <button
-            onClick={() => {
-              const defaultCharacters = processCharacters(DEFAULT_CHARACTERS);
-              setProcessedCharacters(defaultCharacters);
-              setLoadError(false);
-            }}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            기본 캐릭터로 시작하기
-          </button>
-        </div>
-      )}
+      {loadError}
       
       {/* 인트로 화면 */}
       {gameState === 'intro' && (
