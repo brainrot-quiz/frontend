@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { textToSpeech } from '@/utils/tts';
+import { textToSpeech } from '@/lib/tts';
 
 export async function POST(request: Request) {
   try {
-    const { text, voice } = await request.json();
+    const { text } = await request.json();
     
     if (!text) {
       return NextResponse.json(
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const audioBuffer = await textToSpeech(text, voice);
+    const audioBuffer = await textToSpeech(text);
     
     return new NextResponse(audioBuffer, {
       headers: {
