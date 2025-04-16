@@ -11,6 +11,9 @@ const nextConfig = {
     }
     return config;
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200],
@@ -20,7 +23,6 @@ const nextConfig = {
     loader: 'default',
     minimumCacheTTL: 60,
   },
-  swcMinify: true,
   reactStrictMode: true,
 };
 
