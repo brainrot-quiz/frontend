@@ -349,6 +349,31 @@ const createSpeechRecognition = () => {
   return SpeechRecognition;
 };
 
+// 마이크 권한 요청 함수 추가 (Safari 브라우저 대응)
+const requestMicrophonePermission = async (
+  setMicPermissionGranted: (granted: boolean) => void,
+  setSpeechRecognitionError: (error: string | null) => void
+) => {
+  try {
+    // Safari에서는 getUserMedia를 직접 호출하여 권한 요청
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    console.log('마이크 권한 획득 성공');
+    
+    // 성공적으로 스트림을 얻었으면 트랙 중지 (실제 사용은 SpeechRecognition에서 함)
+    stream.getTracks().forEach(track => track.stop());
+    
+    setMicPermissionGranted(true);
+    return true;
+  } catch (error) {
+    console.error('마이크 권한 요청 실패:', error);
+    
+    // 권한 거부 메시지 표시
+    setSpeechRecognitionError('마이크 권한이 거부되었습니다. 브라우저 설정에서 마이크 권한을 허용해주세요.');
+    setMicPermissionGranted(false);
+    return false;
+  }
+};
+
 export default function Home() {
   // 게임 상태 관련 state
   const [gameState, setGameState] = useState<'intro' | 'playing' | 'results'>('intro');
@@ -1007,8 +1032,8 @@ export default function Home() {
     }
   };
 
-  // 음성인식 버튼 클릭 핸들러 함수
-  const handleSpeechRecognition = () => {
+  // 음성인식 버튼 클릭 핸들러 함수 수정
+  const handleSpeechRecognition = async () => {
     console.log('음성 인식 버튼 클릭:', { hasRecognition: !!recognition, isListening, isProcessing });
     
     // 처리 중일 때는 중복 클릭 방지
@@ -1029,6 +1054,12 @@ export default function Home() {
     
     // 처리 시작
     setIsProcessing(true);
+    
+    // 디바이스 감지
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+    const isIOSSafari = isIOS && isSafari;
     
     // 음성 인식 중이면 중지
     if (isListening) {
@@ -1052,6 +1083,20 @@ export default function Home() {
     // 음성 인식 중이 아니면 시작
     else {
       console.log('음성 인식 시작 시도');
+      
+      // Safari 또는 iOS Safari에서는 먼저 getUserMedia를 통해 명시적으로 권한 요청
+      if (isSafari || isIOSSafari) {
+        console.log('Safari 브라우저 감지 - 마이크 권한 명시적 요청');
+        const permissionGranted = await requestMicrophonePermission(
+          setMicPermissionGranted,
+          setSpeechRecognitionError
+        );
+        if (!permissionGranted) {
+          console.error('마이크 권한을 얻지 못했습니다. 음성 인식을 시작할 수 없습니다.');
+          setIsProcessing(false);
+          return;
+        }
+      }
       
       // UI 상태 즉시 업데이트
       setIsListening(true);
@@ -1120,7 +1165,7 @@ export default function Home() {
         return;
       }
       
-      // 디바이스 감지 로직 개선 - 안드로이드 기기 정확히 감지
+      // 디바이스 감지 로직 개선
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobile = /iphone|ipad|ipod|android/.test(userAgent);
       const isAndroid = /android/.test(userAgent);
@@ -1159,11 +1204,18 @@ export default function Home() {
       // 기본 설정 - 기기별 최적화
       recognitionInstance.lang = 'it-IT'; // 이탈리아어 인식
       
-      // 안드로이드 크롬에서는 continuous를 true로 설정
-      recognitionInstance.continuous = isAndroidChrome;
-      
-      // 안드로이드에서는 중간 결과 사용
-      recognitionInstance.interimResults = isAndroid;
+      // Safari에서는 특수 설정
+      if (isSafari || isIOSSafari) {
+        recognitionInstance.continuous = false; // Safari에서는 항상 false로 설정
+        recognitionInstance.interimResults = false; // Safari에서는 중간 결과 사용 안함
+      } else if (isAndroidChrome) {
+        recognitionInstance.continuous = true; // 안드로이드 크롬에서는 continuous를 true로 설정
+        recognitionInstance.interimResults = true; // 안드로이드에서는 중간 결과 사용
+      } else {
+        // 기타 브라우저
+        recognitionInstance.continuous = false;
+        recognitionInstance.interimResults = false;
+      }
       
       // 인식 시간 제한 증가 (안드로이드에서만 동작)
       if (isAndroid && 'maxSpeechRecognitionDuration' in recognitionInstance) {
@@ -1190,11 +1242,23 @@ export default function Home() {
             return;
           }
           
+          // 결과 화면이 표시 중이면 무시
+          if (showResult) {
+            console.log('결과 화면이 표시 중입니다. 추가 결과를 무시합니다.');
+            return;
+          }
+          
           let transcript = '';
           let isFinal = false;
           
-          // 안드로이드와 iOS에서 다른 방식으로 결과 처리
-          if (isAndroid) {
+          // Safari와 Android에서 다른 방식으로 결과 처리
+          if (isSafari || isIOSSafari) {
+            // Safari에서는 간단하게 처리
+            if (event.results.length > 0) {
+              transcript = event.results[0][0].transcript;
+              isFinal = true; // Safari에서는 모든 결과를 최종으로 처리
+            }
+          } else if (isAndroid) {
             // 안드로이드에서는 모든 결과 확인
             for (let i = event.resultIndex; i < event.results.length; i++) {
               if (event.results[i].isFinal) {
@@ -1208,7 +1272,7 @@ export default function Home() {
               transcript = event.results[0][0].transcript;
             }
           } else {
-            // iOS나 다른 브라우저에서는 간단하게 처리
+            // 기타 브라우저에서는 간단하게 처리
             if (event.results.length > 0) {
               transcript = event.results[0][0].transcript;
               isFinal = true;
@@ -1222,14 +1286,14 @@ export default function Home() {
             setUserInput(transcript);
             
             // 최종 결과일 때만 제출 처리
-            if (isFinal || !isAndroid) {
+            if (isFinal) {
               // 중복 처리 방지를 위한 플래그 설정
               setIsAnswerProcessing(true);
               
               // 결과 처리
               setAnswer(transcript);
               
-              // 음성인식 중지 - 결과 수신 후 중지
+              // 음성인식 중지 - 결과 수신 후 즉시 중지
               if (recognition) {
                 try {
                   recognition.abort();
@@ -1239,18 +1303,16 @@ export default function Home() {
                 }
               }
               
-              // 마이크 상태 해제 - 결과 처리 시작 시 비활성화
+              // 마이크 상태 해제 - 결과 처리 시작 시 즉시 비활성화
               setIsListening(false);
               
-              // 답변 처리 (약간의 지연 후)
-              setTimeout(() => {
-                if (!showResult) {
-                  handleAnswer(transcript);
-                } else {
-                  console.log('결과가 이미 표시 중입니다. 답변 처리를 건너뜁니다.');
-                  setIsAnswerProcessing(false);
-                }
-              }, 300);
+              // 답변 처리 (즉시 실행)
+              if (!showResult) {
+                handleAnswer(transcript);
+              } else {
+                console.log('결과가 이미 표시 중입니다. 답변 처리를 건너뜁니다.');
+                setIsAnswerProcessing(false);
+              }
             }
           } else {
             console.warn("유효한 음성 인식 결과가 없습니다.");
@@ -1271,19 +1333,34 @@ export default function Home() {
         if (event.error !== 'aborted') {
           let errorMessage = `음성 인식 오류: ${event.error}`;
           
-          // 모바일 기기별 추가 안내 메시지
-          if (isMobile) {
+          // Safari 특화 오류 메시지
+          if (isSafari || isIOSSafari) {
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+              errorMessage = '마이크 권한이 거부되었습니다. Safari 설정 > 이 웹사이트 > 마이크에서 "허용"으로 설정해주세요.';
+              
+              // Safari에서는 명시적으로 권한 요청 버튼 표시
+              setShowPermissionButton(true);
+            } else if (event.error === 'no-speech') {
+              errorMessage = '음성이 감지되지 않았습니다. Safari에서는 허용 버튼을 누른 후 다시 말해보세요.';
+            } else if (event.error === 'audio-capture') {
+              errorMessage = '마이크를 찾을 수 없습니다. 컴퓨터에 마이크가 연결되어 있는지 확인하세요.';
+            } else if (event.error === 'network') {
+              errorMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인하세요.';
+            }
+            
+            setMicPermissionGranted(false);
+          }
+          // 모바일 기기별 추가 안내 메시지 (Android)
+          else if (isAndroid) {
             if (event.error === 'no-speech') {
               errorMessage = '음성이 감지되지 않았습니다. 더 크게 말해보세요.';
               // 안드로이드에서 no-speech 오류는 안내만 표시하고 1초 후 재시도
-              if (isAndroid) {
-                setTimeout(() => {
-                  if (gameState === 'playing' && !showResult && !isAnswerProcessing) {
-                    console.log("안드로이드에서 no-speech 오류 후 자동 재시도");
-                    startSpeechRecognition();
-                  }
-                }, 1000);
-              }
+              setTimeout(() => {
+                if (gameState === 'playing' && !showResult && !isAnswerProcessing) {
+                  console.log("안드로이드에서 no-speech 오류 후 자동 재시도");
+                  startSpeechRecognition();
+                }
+              }, 1000);
             } else if (event.error === 'network') {
               errorMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인하세요.';
             } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
@@ -1298,7 +1375,7 @@ export default function Home() {
           // 일정 시간 후 오류 메시지 제거
           setTimeout(() => {
             setSpeechRecognitionError(null);
-          }, 3000);
+          }, 5000); // 더 긴 시간 표시 (5초)
         }
         
         // 오류 발생 시 마이크 상태 해제 (의도적 중단이 아니면 약간 지연)
@@ -1329,6 +1406,21 @@ export default function Home() {
           gameState
         });
         
+        // 결과 화면이 표시 중이거나 정답 처리 중인 경우 마이크 즉시 비활성화
+        if (showResult || isAnswerProcessing) {
+          console.log("결과 표시 중 또는 답변 처리 중 - 마이크 즉시 비활성화");
+          setIsListening(false);
+          setRecognition(null);
+          return;
+        }
+        
+        // Safari에서는 종료 시 간단하게 처리
+        if (isSafari || isIOSSafari) {
+          setIsListening(false);
+          setRecognition(null);
+          return;
+        }
+        
         // 안드로이드에서 no-speech 오류가 발생하지 않았지만 음성이 인식되지 않은 경우 재시도
         if (isAndroid && !isAnswerProcessing && !showResult && gameState === 'playing' && !userInput) {
           console.log("안드로이드에서 입력 없이 종료됨 - 재시도 준비");
@@ -1358,11 +1450,17 @@ export default function Home() {
       } catch (startError) {
         console.error("음성인식 시작 요청 중 오류:", startError);
         
+        // Safari에서 오류가 발생하면 명시적 안내
+        if (isSafari || isIOSSafari) {
+          setSpeechRecognitionError("Safari에서 음성 인식을 시작할 수 없습니다. 마이크 권한을 확인하거나 Chrome 브라우저를 사용해보세요.");
+          setShowPermissionButton(true);
+        } else {
+          setSpeechRecognitionError("음성 인식 시작에 실패했습니다. 다시 시도해주세요.");
+        }
+        
         // 시작 실패 시 상태 초기화
         setIsListening(false);
         setRecognition(null);
-        
-        setSpeechRecognitionError("음성 인식 시작에 실패했습니다. 다시 시도해주세요.");
       }
     } catch (error) {
       console.error("음성인식 설정 중 오류 발생:", error);
@@ -1785,6 +1883,9 @@ export default function Home() {
     updateVisitorCount();
   }, []);
 
+  // 상태 추가
+  const [showPermissionButton, setShowPermissionButton] = useState(false);
+
   return (
     <main className="min-h-screen p-4 md:p-8 bg-gradient-to-b from-blue-50 to-indigo-100">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -2000,6 +2101,29 @@ export default function Home() {
               
               {/* 음성 인식 UI */}
               <div className="flex flex-col items-center">
+                {showPermissionButton && (
+                  <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-yellow-800 text-sm mb-2">
+                      Safari에서는 마이크 접근 권한이 필요합니다. 아래 버튼을 클릭하여 권한을 허용해주세요.
+                    </p>
+                    <button
+                      onClick={() => requestMicrophonePermission(
+                        setMicPermissionGranted, 
+                        setSpeechRecognitionError
+                      ).then(granted => {
+                        if (granted) {
+                          setShowPermissionButton(false);
+                          setIsListening(true);
+                          startSpeechRecognition();
+                        }
+                      })}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg text-sm font-medium"
+                    >
+                      마이크 권한 허용하기
+                    </button>
+                  </div>
+                )}
+                
                 <button
                   onClick={handleSpeechRecognition}
                   disabled={isProcessing} // 처리 중일 때 중복 클릭 방지
