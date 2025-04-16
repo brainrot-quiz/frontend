@@ -346,6 +346,7 @@ export default function Home() {
   const [showResult, setShowResult] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false); // 클릭 처리 중 상태 추가
+  const [micPermissionGranted, setMicPermissionGranted] = useState(false); // 마이크 권한 상태 추가
   const [timeLeft, setTimeLeft] = useState(15);
   const [name, setName] = useState("");
   const [hints, setHints] = useState<Record<string, boolean>>({}); // 힌트 표시 여부
@@ -904,10 +905,8 @@ export default function Home() {
     if (isListening) {
       console.log('음성 인식 중지 시도');
       
-      // 먼저 UI 상태를 즉시 변경하여 사용자에게 피드백 제공
-      setIsListening(false);
-      
-      // recognition 객체가 없는 경우 예외 처리
+      // UI 상태 업데이트 지연 (모바일에서 너무 빠르게 상태 변경되는 것 방지)
+      // 실제 중지 작업 먼저 실행
       if (recognition) {
         try {
           recognition.abort(); // abort로 변경하여 의도적인 중단임을 표시
@@ -918,18 +917,30 @@ export default function Home() {
       } else {
         console.warn("중지하려고 했으나 recognition 객체가 없습니다.");
       }
+      
+      // 약간의 지연 후에 상태 업데이트 (UI 깜빡임 방지)
+      setTimeout(() => {
+        setIsListening(false);
+      }, 100);
     } 
     // 음성 인식 중이 아니면 시작
     else {
       console.log('음성 인식 시작 시도');
       
-      // 먼저 UI 상태를 즉시 변경하여 사용자에게 피드백 제공
+      // UI 상태 즉시 업데이트
       setIsListening(true);
       
-      // 약간의 지연 후 실제 음성 인식 시작 (UI 업데이트가 먼저 적용되도록)
-      setTimeout(() => {
-        startSpeechRecognition();
-      }, 10);
+      // 브라우저 음성인식 지원 여부 확인 후 시작
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setSpeechRecognitionError('이 브라우저는 음성 인식을 지원하지 않습니다.');
+        setTimeout(() => setIsListening(false), 100);
+        setIsProcessing(false);
+        return;
+      }
+      
+      // 음성 인식 시작
+      startSpeechRecognition();
     }
     
     // 짧은 지연 후 처리 상태 해제
@@ -940,7 +951,7 @@ export default function Home() {
 
   // 음성인식 시작 함수
   const startSpeechRecognition = () => {
-    // 이미 음성인식 중이면 중복 실행 방지
+    // 이미 음성인식 객체가 있으면 중복 실행 방지
     if (recognition) {
       console.log('이미 음성인식 객체가 존재합니다:', { hasRecognition: !!recognition });
       return;
@@ -951,8 +962,8 @@ export default function Home() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         setSpeechRecognitionError('이 브라우저는 음성 인식을 지원하지 않습니다.');
-        setIsListening(false); // 상태 롤백
-        setIsProcessing(false); // 처리 상태 해제
+        setIsListening(false);
+        setIsProcessing(false);
         return;
       }
       
@@ -964,7 +975,7 @@ export default function Home() {
       
       // 기본 설정
       recognitionInstance.lang = 'it-IT'; // 이탈리아어 인식
-      recognitionInstance.continuous = false;
+      recognitionInstance.continuous = isMobile; // 모바일에서는 연속 인식 활성화
       recognitionInstance.interimResults = isMobile; // 모바일에서는 중간 결과 사용
       
       // 추가 설정
@@ -975,8 +986,9 @@ export default function Home() {
       // 시작 이벤트
       recognitionInstance.onstart = () => {
         console.log("음성인식 시작됨");
-        // 상태 강제 갱신으로 상태 불일치 방지
-        setIsListening(true);
+        // 마이크 권한 획득 표시
+        setMicPermissionGranted(true);
+        // UI 상태가 이미 설정되어 있으므로 추가 설정 없음
       };
       
       // 결과 이벤트
@@ -1022,15 +1034,20 @@ export default function Home() {
                 handleAnswer(finalTranscript);
               }
               
-              // 음성 인식 완료됨을 표시
-              setIsListening(false);
+              // 약간의 지연 후 상태 업데이트
+              setTimeout(() => {
+                setIsListening(false);
+              }, 200);
             }, 200);
           } else {
             console.warn("유효한 음성 인식 결과가 없습니다.");
           }
         } catch (error) {
           console.error("음성 인식 결과 처리 중 오류:", error);
-          setIsListening(false);
+          // 오류 발생 시에도 일정 시간 후 상태 업데이트
+          setTimeout(() => {
+            setIsListening(false);
+          }, 200);
         }
       };
       
@@ -1049,6 +1066,7 @@ export default function Home() {
               errorMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인하세요.';
             } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
               errorMessage = '마이크 권한이 거부되었습니다. 브라우저 설정에서 마이크 권한을 허용해주세요.';
+              setMicPermissionGranted(false);
             }
           }
           
@@ -1060,9 +1078,11 @@ export default function Home() {
           }, 3000);
         }
         
-        // 오류 발생 시 상태 초기화
-        setIsListening(false);
-        setRecognition(null);
+        // 오류 발생 시 약간의 지연 후 상태 초기화
+        setTimeout(() => {
+          setIsListening(false);
+          setRecognition(null);
+        }, isMobile ? 200 : 0);
         
         // 모바일에서 자동으로 재시작하는 코드 제거
       };
@@ -1070,9 +1090,24 @@ export default function Home() {
       // 종료 이벤트
       recognitionInstance.onend = () => {
         console.log("음성인식 종료됨");
-        // 강제로 상태 업데이트하여 UI 동기화
-        setIsListening(false);
-        setRecognition(null);
+        
+        // 모바일에서는 음성 인식이 자동으로 종료될 수 있으므로
+        // 의도적으로 종료된 경우가 아니라면 상태를 유지
+        if (isMobile && micPermissionGranted) {
+          // 모바일에서 의도하지 않은 종료 시 딜레이 후 상태 변경
+          // 이렇게 하면 빠르게 종료되더라도 UI에 표시된 상태는 유지됨
+          setTimeout(() => {
+            // 만약 recognition이 null이고(의도적 종료) isListening이 여전히 true라면
+            // 이때만 상태를 false로 변경
+            if (!recognition && isListening) {
+              setIsListening(false);
+            }
+          }, 500);
+        } else {
+          // 데스크탑이나 의도적 종료의 경우 바로 상태 변경
+          setIsListening(false);
+          setRecognition(null);
+        }
       };
       
       // 전역 변수에 인스턴스 저장 (정지 버튼에서 사용)
@@ -1084,14 +1119,24 @@ export default function Home() {
         console.log("음성인식 시작 요청됨");
       } catch (startError) {
         console.error("음성인식 시작 요청 중 오류:", startError);
-        setIsListening(false);
-        setRecognition(null);
+        
+        // 시작 실패 시 약간의 지연 후 상태 초기화
+        setTimeout(() => {
+          setIsListening(false);
+          setRecognition(null);
+        }, 200);
+        
         setSpeechRecognitionError("음성 인식 시작에 실패했습니다. 다시 시도해주세요.");
       }
     } catch (error) {
       console.error("음성인식 설정 중 오류 발생:", error);
-      setIsListening(false);
-      setRecognition(null);
+      
+      // 오류 발생 시 약간의 지연 후 상태 초기화
+      setTimeout(() => {
+        setIsListening(false);
+        setRecognition(null);
+      }, 200);
+      
       setSpeechRecognitionError("음성 인식을 시작할 수 없습니다. 브라우저 설정을 확인하세요.");
     }
   };
@@ -1729,10 +1774,10 @@ export default function Home() {
                       ? 'bg-red-500 active:bg-red-600' 
                       : 'bg-indigo-600 active:bg-indigo-700'
                   } text-white flex items-center justify-center shadow-lg transition-colors mb-3 touch-manipulation`}
-                  style={{ touchAction: 'manipulation' }}
-                  onTouchStart={(e) => {
-                    // 기본 터치 이벤트 동작을 방지하지 않고 추가 기능만 수행
-                    console.log('마이크 버튼 터치 시작');
+                  style={{ 
+                    touchAction: 'manipulation',
+                    WebkitUserSelect: 'none',
+                    WebkitTapHighlightColor: 'transparent'
                   }}
                 >
                   {isListening ? (
