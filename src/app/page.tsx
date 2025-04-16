@@ -1022,16 +1022,7 @@ export default function Home() {
         setIsListening(false);
         setRecognition(null);
         
-        // 모바일에서 자동으로 재시작 (게임 중일 때만)
-        if (isMobile && gameState === 'playing' && !showResult) {
-          console.log("모바일에서 음성인식 자동 재시작 시도");
-          // 약간의 지연 후 재시작
-          setTimeout(() => {
-            if (gameState === 'playing' && !showResult && !isListening) {
-              startSpeechRecognition();
-            }
-          }, 300);
-        }
+        // 모바일에서 자동으로 재시작하는 코드 제거
       };
       
       // 전역 변수에 인스턴스 저장 (정지 버튼에서 사용)
