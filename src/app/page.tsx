@@ -901,39 +901,48 @@ export default function Home() {
     setIsProcessing(true);
     
     // 음성 인식 중이면 중지
-    if (isListening && recognition) {
+    if (isListening) {
       console.log('음성 인식 중지 시도');
-      try {
-        recognition.abort(); // abort로 변경하여 의도적인 중단임을 표시
-        setRecognition(null);
-        setIsListening(false);
-      } catch (error) {
-        console.error("음성 인식 중지 중 오류:", error);
-      }
       
-      // 짧은 지연 후 처리 상태 해제
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 500);
+      // 먼저 UI 상태를 즉시 변경하여 사용자에게 피드백 제공
+      setIsListening(false);
+      
+      // recognition 객체가 없는 경우 예외 처리
+      if (recognition) {
+        try {
+          recognition.abort(); // abort로 변경하여 의도적인 중단임을 표시
+          setRecognition(null);
+        } catch (error) {
+          console.error("음성 인식 중지 중 오류:", error);
+        }
+      } else {
+        console.warn("중지하려고 했으나 recognition 객체가 없습니다.");
+      }
     } 
     // 음성 인식 중이 아니면 시작
     else {
       console.log('음성 인식 시작 시도');
-      startSpeechRecognition();
       
-      // 짧은 지연 후 처리 상태 해제
+      // 먼저 UI 상태를 즉시 변경하여 사용자에게 피드백 제공
+      setIsListening(true);
+      
+      // 약간의 지연 후 실제 음성 인식 시작 (UI 업데이트가 먼저 적용되도록)
       setTimeout(() => {
-        setIsProcessing(false);
-      }, 800);
+        startSpeechRecognition();
+      }, 10);
     }
+    
+    // 짧은 지연 후 처리 상태 해제
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 800);
   };
 
   // 음성인식 시작 함수
   const startSpeechRecognition = () => {
     // 이미 음성인식 중이면 중복 실행 방지
-    if (isListening || recognition) {
-      console.log('이미 음성인식 중입니다:', { isListening, hasRecognition: !!recognition });
-      setIsProcessing(false); // 처리 상태 해제
+    if (recognition) {
+      console.log('이미 음성인식 객체가 존재합니다:', { hasRecognition: !!recognition });
       return;
     }
     
@@ -942,6 +951,7 @@ export default function Home() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         setSpeechRecognitionError('이 브라우저는 음성 인식을 지원하지 않습니다.');
+        setIsListening(false); // 상태 롤백
         setIsProcessing(false); // 처리 상태 해제
         return;
       }
@@ -965,6 +975,7 @@ export default function Home() {
       // 시작 이벤트
       recognitionInstance.onstart = () => {
         console.log("음성인식 시작됨");
+        // 상태 강제 갱신으로 상태 불일치 방지
         setIsListening(true);
       };
       
@@ -995,17 +1006,31 @@ export default function Home() {
             setUserInput(finalTranscript);
             setAnswer(finalTranscript);
             
+            // 음성인식 객체 초기화 (결과를 받은 후 클린업)
+            if (recognition) {
+              try {
+                recognition.abort();
+              } catch (e) {
+                console.error("결과 수신 후 음성인식 중지 중 오류:", e);
+              }
+            }
+            setRecognition(null);
+            
             // 약간의 지연 후 자동 제출
             setTimeout(() => {
               if (!showResult) {
                 handleAnswer(finalTranscript);
               }
+              
+              // 음성 인식 완료됨을 표시
+              setIsListening(false);
             }, 200);
           } else {
             console.warn("유효한 음성 인식 결과가 없습니다.");
           }
         } catch (error) {
           console.error("음성 인식 결과 처리 중 오류:", error);
+          setIsListening(false);
         }
       };
       
@@ -1034,25 +1059,35 @@ export default function Home() {
             setSpeechRecognitionError(null);
           }, 3000);
         }
-        setIsListening(false);
-        setRecognition(null);
-      };
-      
-      // 종료 이벤트
-      recognitionInstance.onend = () => {
-        console.log("음성인식 종료됨");
+        
+        // 오류 발생 시 상태 초기화
         setIsListening(false);
         setRecognition(null);
         
         // 모바일에서 자동으로 재시작하는 코드 제거
       };
       
+      // 종료 이벤트
+      recognitionInstance.onend = () => {
+        console.log("음성인식 종료됨");
+        // 강제로 상태 업데이트하여 UI 동기화
+        setIsListening(false);
+        setRecognition(null);
+      };
+      
       // 전역 변수에 인스턴스 저장 (정지 버튼에서 사용)
       setRecognition(recognitionInstance);
       
       // 음성인식 시작
-      recognitionInstance.start();
-      console.log("음성인식 시작 요청됨");
+      try {
+        recognitionInstance.start();
+        console.log("음성인식 시작 요청됨");
+      } catch (startError) {
+        console.error("음성인식 시작 요청 중 오류:", startError);
+        setIsListening(false);
+        setRecognition(null);
+        setSpeechRecognitionError("음성 인식 시작에 실패했습니다. 다시 시도해주세요.");
+      }
     } catch (error) {
       console.error("음성인식 설정 중 오류 발생:", error);
       setIsListening(false);
@@ -1695,6 +1730,10 @@ export default function Home() {
                       : 'bg-indigo-600 active:bg-indigo-700'
                   } text-white flex items-center justify-center shadow-lg transition-colors mb-3 touch-manipulation`}
                   style={{ touchAction: 'manipulation' }}
+                  onTouchStart={(e) => {
+                    // 기본 터치 이벤트 동작을 방지하지 않고 추가 기능만 수행
+                    console.log('마이크 버튼 터치 시작');
+                  }}
                 >
                   {isListening ? (
                     <FaMicrophoneSlash className="text-3xl" />
