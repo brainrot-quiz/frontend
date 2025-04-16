@@ -924,10 +924,21 @@ export default function Home() {
         return;
       }
       
+      // 모바일 디바이스 감지
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      console.log(`디바이스 타입: ${isMobile ? '모바일' : '데스크탑'}`);
+      
       const recognitionInstance = new SpeechRecognition();
-      recognitionInstance.lang = 'it-IT'; // 이탈리아어 인식으로 변경
+      
+      // 기본 설정
+      recognitionInstance.lang = 'it-IT'; // 이탈리아어 인식
       recognitionInstance.continuous = false;
-      recognitionInstance.interimResults = false;
+      recognitionInstance.interimResults = isMobile; // 모바일에서는 중간 결과 사용
+      
+      // 추가 설정
+      if ('maxAlternatives' in recognitionInstance) {
+        (recognitionInstance as any).maxAlternatives = 5; // 여러 대안 인식 결과 제공
+      }
       
       // 시작 이벤트
       recognitionInstance.onstart = () => {
@@ -938,19 +949,39 @@ export default function Home() {
       // 결과 이벤트
       recognitionInstance.onresult = (event: any) => {
         try {
-          const transcript = event.results[0][0].transcript;
-          console.log("인식된 음성:", transcript);
+          console.log("음성 인식 결과 이벤트:", event);
           
-          // 음성 인식 결과 처리
-          setUserInput(transcript);
-          setAnswer(transcript);
+          let finalTranscript = '';
           
-          // 약간의 지연 후 자동 제출
-          setTimeout(() => {
-            if (!showResult) {
-              handleAnswer(transcript);
+          // 모바일에서는 중간 결과를 포함할 수 있음
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+              finalTranscript += result[0].transcript;
             }
-          }, 200);
+          }
+          
+          // 결과가 없으면 첫 번째 결과 사용
+          if (!finalTranscript && event.results.length > 0) {
+            finalTranscript = event.results[0][0].transcript;
+          }
+          
+          console.log("최종 인식된 음성:", finalTranscript);
+          
+          if (finalTranscript) {
+            // 음성 인식 결과 처리
+            setUserInput(finalTranscript);
+            setAnswer(finalTranscript);
+            
+            // 약간의 지연 후 자동 제출
+            setTimeout(() => {
+              if (!showResult) {
+                handleAnswer(finalTranscript);
+              }
+            }, 200);
+          } else {
+            console.warn("유효한 음성 인식 결과가 없습니다.");
+          }
         } catch (error) {
           console.error("음성 인식 결과 처리 중 오류:", error);
         }
@@ -961,7 +992,20 @@ export default function Home() {
         console.error("음성인식 오류:", event.error);
         // aborted 오류는 의도적인 중단이므로 오류 메시지 표시하지 않음
         if (event.error !== 'aborted') {
-          setSpeechRecognitionError(`음성 인식 오류: ${event.error}`);
+          let errorMessage = `음성 인식 오류: ${event.error}`;
+          
+          // 모바일 기기별 추가 안내 메시지
+          if (isMobile) {
+            if (event.error === 'no-speech') {
+              errorMessage = '음성이 감지되지 않았습니다. 더 크게 말해보세요.';
+            } else if (event.error === 'network') {
+              errorMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인하세요.';
+            } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+              errorMessage = '마이크 권한이 거부되었습니다. 브라우저 설정에서 마이크 권한을 허용해주세요.';
+            }
+          }
+          
+          setSpeechRecognitionError(errorMessage);
           
           // 3초 후 오류 메시지 제거
           setTimeout(() => {
@@ -977,6 +1021,17 @@ export default function Home() {
         console.log("음성인식 종료됨");
         setIsListening(false);
         setRecognition(null);
+        
+        // 모바일에서 자동으로 재시작 (게임 중일 때만)
+        if (isMobile && gameState === 'playing' && !showResult) {
+          console.log("모바일에서 음성인식 자동 재시작 시도");
+          // 약간의 지연 후 재시작
+          setTimeout(() => {
+            if (gameState === 'playing' && !showResult && !isListening) {
+              startSpeechRecognition();
+            }
+          }, 300);
+        }
       };
       
       // 전역 변수에 인스턴스 저장 (정지 버튼에서 사용)
@@ -989,7 +1044,7 @@ export default function Home() {
       console.error("음성인식 설정 중 오류 발생:", error);
       setIsListening(false);
       setRecognition(null);
-      setSpeechRecognitionError("음성 인식을 시작할 수 없습니다.");
+      setSpeechRecognitionError("음성 인식을 시작할 수 없습니다. 브라우저 설정을 확인하세요.");
     }
   };
 
