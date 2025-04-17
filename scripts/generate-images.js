@@ -113,7 +113,7 @@ const generateAllImages = () => {
     const name = path.basename(filename, '.jpg');
     const filepath = path.join(outputDir, filename);
     generateImage(name, filepath);
-    console.log(`Generated: ${filename}`);
+
   });
 };
 

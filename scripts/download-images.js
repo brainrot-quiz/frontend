@@ -36,9 +36,9 @@ const downloadAllImages = async () => {
 
     try {
       await downloadImage(url, filepath);
-      console.log(`Downloaded: ${filename}`);
+
     } catch (error) {
-      console.error(`Failed to download ${filename}:`, error.message);
+
     }
   }
 };

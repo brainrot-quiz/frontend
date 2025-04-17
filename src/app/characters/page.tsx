@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { HeartIcon } from '@heroicons/react/24/solid';
 import { characters as importedCharacters } from '@/data/characters';
 import Image from 'next/image';
-import { db } from '@/firebase/config';
+import { getFirebaseInstance } from '@/firebase/config';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 
 // 전역 변수로 오디오 객체 선언
@@ -80,6 +80,9 @@ export default function Characters() {
       try {
         setIsLoading(true);
         setLoadError(null);
+        
+        // Firebase 인스턴스 가져오기
+        const { db } = await getFirebaseInstance();
         
         // Firebase에서 좋아요 데이터 불러오기
         const likesDocRef = doc(db, 'statistics', 'character_likes');
@@ -161,6 +164,9 @@ export default function Characters() {
         );
         return updatedCharacters.sort((a, b) => b.likes - a.likes);
       });
+      
+      // Firebase 인스턴스 가져오기
+      const { db } = await getFirebaseInstance();
       
       // 1. Firebase 업데이트
       const likesDocRef = doc(db, 'statistics', 'character_likes');

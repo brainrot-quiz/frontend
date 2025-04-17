@@ -54,11 +54,11 @@ const characterVoiceMap: Record<string, { text: string; voiceId: string }> = {
  * @returns 오디오 URL
  */
 export async function textToSpeech(text: string): Promise<string> {
-  console.log('[TTS 디버깅] TTS 함수 호출됨, 입력:', text);
+
   
   // 입력이 characterVoiceMap의 키와 일치하는지 확인 (캐릭터 ID인지 확인)
   const isCharacterId = Object.keys(characterVoiceMap).includes(text);
-  console.log('[TTS 디버깅] 캐릭터 ID 여부:', isCharacterId);
+
   
   let characterText = text;
   let voiceId = "pNInz6obpgDQGcFmaJgB"; // Adam
@@ -68,13 +68,9 @@ export async function textToSpeech(text: string): Promise<string> {
     const character = characterVoiceMap[text];
     characterText = character.text;
     voiceId = character.voiceId;
-    console.log('[TTS 디버깅] 캐릭터 ID 매핑 결과:', { 
-      id: text, 
-      text: characterText, 
-      voiceId 
-    });
+    
   } else {
-    console.log('[TTS 디버깅] 캐릭터 ID 아님, 직접 텍스트 사용:', text);
+
   }
 
   // API 요청을 위한 최대 재시도 횟수
@@ -85,13 +81,12 @@ export async function textToSpeech(text: string): Promise<string> {
 
   while (currentRetry <= maxRetries && !success) {
     if (currentRetry > 0) {
-      console.log(`[TTS 디버깅] 재시도 ${currentRetry}/${maxRetries}`);
+
       // 재시도 전 잠시 대기
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     try {
-      console.log(`[TTS 디버깅] TTS 요청 준비: 텍스트="${characterText}", 음성 ID=${voiceId}`);
       
       const response = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + voiceId, {
         method: "POST",
@@ -111,23 +106,23 @@ export async function textToSpeech(text: string): Promise<string> {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[TTS 디버깅] API 응답 오류(시도 ${currentRetry + 1}/${maxRetries + 1}):`, response.status, errorText);
+
         currentRetry++;
         continue;
       }
 
       const audioBlob = await response.blob();
       audioUrl = URL.createObjectURL(audioBlob);
-      console.log('[TTS 디버깅] TTS 요청 성공, URL 생성됨:', audioUrl);
+
       success = true;
     } catch (error) {
-      console.error(`[TTS 디버깅] API 요청 예외 발생(시도 ${currentRetry + 1}/${maxRetries + 1}):`, error);
+
       currentRetry++;
     }
   }
 
   if (!success) {
-    console.error('[TTS 디버깅] 모든 재시도 실패, 빈 문자열 반환');
+
     return "";
   }
 

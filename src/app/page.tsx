@@ -4,16 +4,18 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collection, addDoc, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { getFirebaseInstance } from '@/firebase/config';
 import { useRouter } from 'next/navigation';
 import { textToSpeech } from '@/lib/tts';
-import { FaStar, FaHeart, FaFire, FaLightbulb, FaMicrophone, FaMicrophoneSlash, FaCheckCircle, FaTimesCircle, FaRedo, FaShare, FaVolumeUp, FaStepForward, FaUsers } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaVolumeUp, FaMicrophone, FaBrain, FaHeadphones, FaUsers } from 'react-icons/fa';
+import { BiMicrophone, BiMicrophoneOff } from 'react-icons/bi';
+import { RiErrorWarningLine } from 'react-icons/ri';
+import { GiHamburger } from 'react-icons/gi';
+import { characters } from '@/data/characters';
 import Image from 'next/image';
-import { Inter } from 'next/font/google';
-import { characters as importedCharacters, Character as ImportedCharacter } from '@/data/characters';
-import 'regenerator-runtime/runtime';
 import Link from 'next/link';
 import Guestbook from '@/components/Guestbook';
+import { levenshteinDistance } from '@/utils/string';
 
 interface SpeechRecognitionEvent extends Event {
   results: {
@@ -133,23 +135,22 @@ const setupSpeechRecognition = (
   recognition.interimResults = false;
 
   recognition.onstart = () => {
-    console.log('음성 인식 시작');
+
     onStart();
   };
 
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript.trim().toLowerCase();
-    console.log('인식된 음성:', transcript);
+
     onResult(transcript);
   };
 
   recognition.onerror = (event) => {
-    console.error('음성 인식 오류:', event.error);
-    onError(`음성 인식 오류: ${event.error}`);
+    
   };
 
   recognition.onend = () => {
-    console.log('음성 인식 종료');
+
     onEnd();
   };
 
@@ -196,12 +197,12 @@ const getDescriptionMapping = (): Record<string, string> => {
 
 // 캐릭터 데이터 처리 함수 수정
 const processCharacters = (data: any): Character[] => {
-  console.log("캐릭터 처리 시작, 데이터 길이:", data?.length);
+
   
   try {
     // 데이터 유효성 검사
     if (!Array.isArray(data) || data.length === 0) {
-      console.error("유효한 캐릭터 데이터가 없습니다. importedCharacters 사용");
+
       // 대신 importedCharacters 사용
       return processImportedCharacters();
     }
@@ -218,27 +219,27 @@ const processCharacters = (data: any): Character[] => {
     const validCharacters = dataWithIds.filter(char => {
       const isValid = char && char.name;
       if (!isValid) {
-        console.warn("유효하지 않은 캐릭터 건너뜀:", char);
+
       }
       return isValid;
     });
 
     if (validCharacters.length === 0) {
-      console.error("유효한 캐릭터가 없습니다. importedCharacters 사용");
+
       return processImportedCharacters();
     }
 
-    console.log("유효한 캐릭터 수:", validCharacters.length);
+
 
     // 캐릭터 랜덤 셔플 및 5개 선택
     const shuffled = [...validCharacters].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, 5);
     
-    console.log("선택된 캐릭터 이름:", selected.map(c => c.name).join(", "));
+
     
     return selected;
   } catch (error) {
-    console.error("캐릭터 처리 중 오류 발생:", error);
+
     return processImportedCharacters();
   }
 };
@@ -246,14 +247,14 @@ const processCharacters = (data: any): Character[] => {
 // 임포트된 캐릭터 데이터 처리 함수
 const processImportedCharacters = (): Character[] => {
   try {
-    console.log("임포트된 캐릭터 데이터 처리 시작");
+
     
     // 필수 필드 확인
-    const validCharacters = importedCharacters.filter(char => 
+    const validCharacters = characters.filter(char => 
       char && char.id && char.name && char.image
     );
     
-    console.log(`유효한 캐릭터 수: ${validCharacters.length}`);
+
     
     if (validCharacters.length === 0) {
       throw new Error("유효한 임포트 캐릭터가 없습니다");
@@ -283,12 +284,11 @@ const processImportedCharacters = (): Character[] => {
       }
     }
     
-    console.log("선택된 캐릭터 이름:", selected.map(c => c.name).join(", "));
-    console.log("선택된 캐릭터 수:", selected.length);
+    
     
     return selected;
   } catch (error) {
-    console.error("임포트된 캐릭터 처리 중 오류:", error);
+
     // 최소한의 기본 캐릭터 반환 - 5개 보장
     return [
       {
@@ -342,7 +342,7 @@ const createSpeechRecognition = () => {
   
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    console.error('이 브라우저는 SpeechRecognition API를 지원하지 않습니다.');
+
     return null;
   }
   
@@ -357,7 +357,7 @@ const requestMicrophonePermission = async (
   try {
     // Safari에서는 getUserMedia를 직접 호출하여 권한 요청
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    console.log('마이크 권한 획득 성공');
+
     
     // 성공적으로 스트림을 얻었으면 트랙 중지 (실제 사용은 SpeechRecognition에서 함)
     stream.getTracks().forEach(track => track.stop());
@@ -365,7 +365,7 @@ const requestMicrophonePermission = async (
     setMicPermissionGranted(true);
     return true;
   } catch (error) {
-    console.error('마이크 권한 요청 실패:', error);
+
     
     // 권한 거부 메시지 표시
     setSpeechRecognitionError('마이크 권한이 거부되었습니다. 브라우저 설정에서 마이크 권한을 허용해주세요.');
@@ -425,7 +425,7 @@ export default function Home() {
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
-        console.log("타이머 정리 완료");
+
       }
     };
 
@@ -434,7 +434,7 @@ export default function Home() {
       // 기존 타이머 제거
       cleanupTimer();
       
-      console.log(`타이머 시작: ${timeLeft}초`);
+
       
       // 새 타이머 시작
       timerRef.current = setInterval(() => {
@@ -442,7 +442,7 @@ export default function Home() {
           const newTimeLeft = prev - 1;
           // 시간이 다 되면 자동으로 시간 초과 처리
           if (newTimeLeft <= 0) {
-            console.log("타이머 종료 - 시간 초과");
+
             cleanupTimer();
             
             // 시간 초과 처리 함수 호출
@@ -464,7 +464,7 @@ export default function Home() {
 
   // 시간 초과 처리 함수 추가
   const handleTimeOut = useCallback(() => {
-    console.log("시간 초과 처리 시작");
+
     
     // 음성 인식 중지
     if (recognition) {
@@ -473,7 +473,7 @@ export default function Home() {
         setRecognition(null);
         setIsListening(false);
       } catch (error) {
-        console.error("시간 초과로 인한 음성 인식 중지 오류:", error);
+
       }
     }
     
@@ -511,7 +511,7 @@ export default function Home() {
       const isLastQuestion = currentCharacterIndex >= processedCharacters.length - 1;
       const hasLivesLeft = lives > 1; // 감소 전에 체크했으므로 1보다 크면 아직 목숨 남음
       
-      console.log(`시간 초과 처리: 마지막 문제=${isLastQuestion}, 남은 목숨=${hasLivesLeft ? '있음' : '없음'}`);
+
       
       // 짧은 대기 후 다음 문제로 이동 또는 게임 종료
       setTimeout(() => {
@@ -519,13 +519,13 @@ export default function Home() {
         
         if (!hasLivesLeft || isLastQuestion) {
           // 게임 종료 조건: 목숨 없음 또는 마지막 문제
-          console.log(`게임 종료 - ${!hasLivesLeft ? '목숨 소진' : '모든 문제 완료'}`);
+
           setGameState('results');
           setIsPlaying(false);
         } else {
           // 다음 문제로 이동
           const nextIndex = currentCharacterIndex + 1;
-          console.log(`다음 문제로 이동: ${nextIndex + 1}/${processedCharacters.length}`);
+
           
           setCurrentCharacterIndex(nextIndex);
           setTimeLeft(15);
@@ -546,7 +546,7 @@ export default function Home() {
   
   // 게임 시작 함수 수정
   const handleStartGame = () => {
-    console.log('게임 시작');
+
     
     // 이미 로드된 캐릭터가 없으면 다시 로드
     let charactersToUse = processedCharacters;
@@ -576,7 +576,7 @@ export default function Home() {
       }
     }, 500);
     
-    console.log('게임 시작 완료, 문제 수:', charactersToUse.length);
+
   };
   
   // 다음 문제로 이동 함수 수정
@@ -585,7 +585,7 @@ export default function Home() {
     
     // 0.5초 이내에 중복 호출 방지
     if (now - lastQuestionChangeRef.current < 500) {
-      console.log("다음 문제로 이동 요청이 너무 빠릅니다. 무시됨.");
+
       return;
     }
     
@@ -598,7 +598,7 @@ export default function Home() {
         setRecognition(null);
         setIsListening(false);
       } catch (error) {
-        console.error("다음 문제 이동 시 음성 인식 중지 오류:", error);
+
       }
     }
     
@@ -609,7 +609,7 @@ export default function Home() {
         audioRef.current.currentTime = 0;
         audioRef.current = null;
       } catch (error) {
-        console.error("TTS 오디오 중지 중 오류:", error);
+
       }
     }
     
@@ -619,8 +619,6 @@ export default function Home() {
       timerRef.current = null;
     }
     
-    // 현재 문제 인덱스와 총 문제 수 로깅
-    console.log(`다음 문제로 이동: ${currentCharacterIndex + 1}/${processedCharacters.length}`);
     
     if (currentCharacterIndex < processedCharacters.length - 1) {
       // 다음 문제로 이동
@@ -787,7 +785,7 @@ export default function Home() {
         // 직접 캐릭터 이름이 지정된 경우 (도감 모드 등)
         if (!audioFileName) {
           // 모든 캐릭터 이름을 반복하며 일치하는 오디오 파일 찾기
-          const allCharacters = importedCharacters || [];
+          const allCharacters = characters || [];
           for (const char of allCharacters) {
             if (char.name === text) {
               audioFileName = `${text}.mp3`;
@@ -1951,7 +1949,7 @@ export default function Home() {
               }
             }}
           >
-            <FaShare className="mr-2" />
+            <FaUsers className="mr-2" />
             결과 공유하기
           </motion.button>
         </div>
@@ -1975,6 +1973,9 @@ export default function Home() {
       if (visitedRef.current) return; // 이미 방문 처리했으면 중복 방지
       
       try {
+        // Firebase 인스턴스 가져오기
+        const { db } = await getFirebaseInstance();
+        
         // 방문자 수 문서 참조
         const visitorRef = doc(db, 'stats', 'visitors');
         

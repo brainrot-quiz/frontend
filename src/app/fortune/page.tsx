@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { motion } from 'framer-motion';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { getFirebaseInstance } from '@/firebase/config';
 import Image from 'next/image';
 import { Character as GameCharacter } from '@/data/characters';
 import Link from 'next/link';
@@ -719,6 +719,47 @@ const selectRandomCharacter = (charactersArray: GameCharacter[]): FortuneCharact
   
   // 만약 선택이 되지 않았다면 (에러 방지) 첫 번째 캐릭터 반환
   return charactersWithWeights[0];
+};
+
+// 남은 뽑기 확인 함수
+const checkRemainingPulls = async (userId: string): Promise<number> => {
+  try {
+    const { db } = await getFirebaseInstance();
+    const userDoc = await getDoc(doc(db, 'fortuneUsers', userId));
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const lastPullDate = userData.lastPullDate?.toDate();
+      if (lastPullDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const pullDate = new Date(lastPullDate);
+        pullDate.setHours(0, 0, 0, 0);
+        
+        // 오늘 이미 뽑기를 했는지 확인
+        if (today.getTime() === pullDate.getTime()) {
+          return userData.remainingPulls || 0;
+        }
+      }
+    }
+    return 3; // 기본 하루 3회
+  } catch (error) {
+    console.error('뽑기 횟수 확인 오류:', error);
+    return 3; // 오류 시 기본값
+  }
+};
+
+// 뽑기 횟수 업데이트 함수
+const updatePulls = async (userId: string, remainingPulls: number) => {
+  try {
+    const { db } = await getFirebaseInstance();
+    await setDoc(doc(db, 'fortuneUsers', userId), {
+      remainingPulls,
+      lastPullDate: new Date()
+    }, { merge: true });
+  } catch (error) {
+    console.error('뽑기 횟수 업데이트 오류:', error);
+  }
 };
 
 export default function Fortune() {
