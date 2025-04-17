@@ -776,6 +776,42 @@ export default function Home() {
       let audioFileName = '';
       let characterId = '';
       
+      // 캐릭터 이름에 따른 오디오 파일 이름 매핑
+      const nameToFilenameMap: Record<string, string> = {
+        'Tripi Tropi': 'Trippi Troppi',
+        'Burbaloni Luliloli': 'Burbaloni Lulilolli',
+        'Bobritto Bandito': 'Bobrito bandito',
+        'Giraffa Celeste': 'Girafa Celestre',
+        'Frigo Camello': 'Frigo Camelo',
+        'Frulli Frulla': 'Fruli Frula',
+        'Tracotocutulo Lirilì Larilà': 'Lirilì Larilà',
+        'Trulimero Trulicina': 'Trulimero Trulicina',
+        'Troppa Trippa': 'Troppa Trippa',
+        'Trippa Troppa Tralala Lirilì Rilà Tung Tung Sahur Boneca Tung Tung Tralalelo Trippi Troppa Crocodina': 'Trippa Troppa Tralala Lirilì Rilà Tung Tung Sahur Boneca Tung Tung Tralalelo Trippi Troppa Crocodina',
+        'Tralalero Tralala': 'Tralalero Tralala',
+        'Talpa Di Ferro': 'Talpa Di Ferro',
+        'Ta Ta Ta Ta Ta Ta Ta Ta Ta Ta Ta Sahur': 'Ta Ta Ta Ta Ta Ta Ta Ta Ta Ta Ta Sahur',
+        'Svinino Bombondino': 'Svinino Bombondino',
+        'Pot hotspot': 'Pot hotspot',
+        'La Vaca Saturno Saturnita': 'La Vaca Saturno Saturnita',
+        'Il Cacto Hipopotamo': 'Il Cacto Hipopotamo',
+        'Glorbo Fruttodrillo': 'Glorbo Fruttodrillo',
+        'Garamaraman dan Madudungdung tak tuntung perkuntung': 'Garamaraman dan Madudungdung tak tuntung perkuntung',
+        'Chimpanzini Bananini': 'Chimpanzini Bananini',
+        'Chef Crabracadabra': 'Chef Crabracadabra',
+        'Cappuccino Assassino': 'Cappuccino Assassino',
+        'Brr Brr Patapim': 'Brr Brr Patapim',
+        'Brii Brii Bicus Dicus Bombicus': 'Brii Brii Bicus Dicus Bombicus',
+        'Boneca Ambalabu': 'Boneca Ambalabu',
+        'Bombombini Gusini': 'Bombombini Gusini',
+        'Bombardiro Crocodilo': 'Bombardiro Crocodilo',
+        'Bombardiere Lucertola': 'Bombardiere Lucertola',
+        'Blueberrinni Octopussini': 'Blueberrinni Octopussini',
+        'Ballerina Cappuccina': 'Ballerina Cappuccina',
+        'U Din Din Din Din Dun Ma Din Din Din Dun': 'U Din Din Din Din Dun Ma Din Din Din Dun',
+        'Tung Tung Tung Tung Tung Tung Tung Tung Tung Sahur': 'Tung Tung Tung Tung Tung Tung Tung Tung Tung Sahur'
+      };
+      
       // 캐릭터 이름으로 재생 요청된 경우
       if (text && text.trim() !== '') {
         // 현재 캐릭터 찾기 (퀴즈 모드)
@@ -785,7 +821,9 @@ export default function Home() {
           
           // 재생 요청된 텍스트가 현재 캐릭터 이름과 일치하는지 확인
           if (text === currentCharacter.name) {
-            audioFileName = `${text}.mp3`;
+            // 매핑된 파일 이름이 있으면 사용, 없으면 원래 캐릭터 이름 사용
+            const mappedName = nameToFilenameMap[text] || text;
+            audioFileName = `${mappedName}.mp3`;
           }
         } 
         
@@ -795,7 +833,9 @@ export default function Home() {
           const allCharacters = characters || [];
           for (const char of allCharacters) {
             if (char.name === text) {
-              audioFileName = `${text}.mp3`;
+              // 매핑된 파일 이름이 있으면 사용, 없으면 원래 캐릭터 이름 사용
+              const mappedName = nameToFilenameMap[text] || text;
+              audioFileName = `${mappedName}.mp3`;
               characterId = char.id;
               break;
             }
@@ -805,7 +845,9 @@ export default function Home() {
           if (!audioFileName) {
             for (const char of allCharacters) {
               if (char.id === text) {
-                audioFileName = `${char.name}.mp3`;
+                // 매핑된 파일 이름이 있으면 사용, 없으면 원래 캐릭터 이름 사용
+                const mappedName = nameToFilenameMap[char.name] || char.name;
+                audioFileName = `${mappedName}.mp3`;
                 characterId = char.id;
                 break;
               }
@@ -813,9 +855,10 @@ export default function Home() {
           }
         }
         
-        // 그래도 찾지 못했다면 입력된 텍스트 그대로 사용
+        // 그래도 찾지 못했다면 입력된 텍스트로 매핑 시도
         if (!audioFileName) {
-          audioFileName = `${text}.mp3`;
+          const mappedName = nameToFilenameMap[text] || text;
+          audioFileName = `${mappedName}.mp3`;
         }
       }
       
@@ -830,6 +873,11 @@ export default function Home() {
       // 오디오 참조 저장
       audioRef.current = audio;
       
+      // 오디오 로드 이벤트 핸들러
+      audio.onloadeddata = () => {
+        console.log("오디오 파일 로드 성공:", audioPath);
+      };
+      
       // 오디오 재생 완료 이벤트 핸들러 추가
       audio.onended = () => {
         console.log("오디오 재생 완료");
@@ -843,21 +891,67 @@ export default function Home() {
         console.error("오디오 재생 오류:", e, "파일:", audioPath);
         audioRef.current = null;
         
-        // 오류 시 폴백: 기존 TTS API 호출
-        console.log("오디오 파일 로드 실패, TTS API로 폴백");
-        fallbackToTTS(text);
+        // 폴백: 다른 형식으로 파일명 시도
+        tryFallbackAudio(text);
       };
       
       await audio.play().catch(error => {
         console.error("오디오 재생 시작 오류:", error);
-        // 오류 시 폴백: 기존 TTS API 호출
-        fallbackToTTS(text);
+        audioRef.current = null;
+        
+        // 폴백: 다른 형식으로 파일명 시도
+        tryFallbackAudio(text);
       });
     } catch (error) {
       console.error('오디오 재생 오류:', error);
       audioRef.current = null;
       
-      // 오류 시 폴백: 기존 TTS API 호출
+      // 폴백: 다른 형식으로 파일명 시도
+      tryFallbackAudio(text);
+    }
+  };
+
+  // 대체 파일 이름으로 재시도하는 폴백 함수
+  const tryFallbackAudio = async (text: string) => {
+    try {
+      console.log("폴백 오디오 재생 시도:", text);
+      
+      // 1. 공백 제거 버전 시도
+      const noSpaceName = text.replace(/\s+/g, '');
+      const fallbackPath = `/sounds/${noSpaceName}.mp3`;
+      console.log("폴백 오디오 파일 시도 (공백 제거):", fallbackPath);
+      
+      const fallbackAudio = new Audio(fallbackPath);
+      audioRef.current = fallbackAudio;
+      
+      // 오디오 재생 완료 이벤트 핸들러 추가
+      fallbackAudio.onended = () => {
+        console.log("폴백 오디오 재생 완료");
+        setTtsPronounced(true);
+        audioRef.current = null;
+      };
+      
+      // 오류 이벤트 핸들러 추가
+      fallbackAudio.onerror = () => {
+        console.error("폴백 오디오 재생 실패, TTS API로 전환");
+        audioRef.current = null;
+        
+        // 최종 폴백: 기존 TTS API 호출
+        fallbackToTTS(text);
+      };
+      
+      await fallbackAudio.play().catch(error => {
+        console.error("폴백 오디오 재생 시작 오류:", error);
+        audioRef.current = null;
+        
+        // 최종 폴백: 기존 TTS API 호출
+        fallbackToTTS(text);
+      });
+    } catch (error) {
+      console.error('폴백 오디오 재생 오류:', error);
+      audioRef.current = null;
+      
+      // 최종 폴백: 기존 TTS API 호출
       fallbackToTTS(text);
     }
   };
