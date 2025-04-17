@@ -8,6 +8,59 @@ import Image from 'next/image';
 import { db } from '@/firebase/config';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 
+// 전역 변수로 오디오 객체 선언
+let currentAudio: HTMLAudioElement | null = null;
+
+// 오디오 재생 함수
+const playCharacterSound = (characterName: string) => {
+  try {
+    // 이미 재생 중인 오디오가 있으면 중지
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+    
+    // 클라이언트 사이드에서만 실행
+    if (typeof window === 'undefined') return;
+    
+    // 오디오 파일 경로 설정
+    const audioPath = `/sounds/${characterName}.mp3`;
+    console.log("오디오 파일 재생:", audioPath);
+    
+    // 오디오 객체 생성 및 재생
+    const audio = new Audio(audioPath);
+    
+    // 전역 참조 저장
+    currentAudio = audio;
+    
+    // 오디오 재생 완료 이벤트 핸들러 추가
+    audio.onended = () => {
+      console.log("오디오 재생 완료");
+      if (currentAudio === audio) {
+        currentAudio = null;
+      }
+    };
+    
+    // 오류 이벤트 핸들러 추가
+    audio.onerror = (e) => {
+      console.error("오디오 재생 오류:", e, "파일:", audioPath);
+      if (currentAudio === audio) {
+        currentAudio = null;
+      }
+    };
+    
+    audio.play().catch(error => {
+      console.error("오디오 재생 시작 오류:", error);
+      if (currentAudio === audio) {
+        currentAudio = null;
+      }
+    });
+  } catch (error) {
+    console.error('오디오 재생 오류:', error);
+    currentAudio = null;
+  }
+};
+
 interface CharacterWithLikes {
   id: string;
   name: string;
@@ -155,6 +208,11 @@ export default function Characters() {
     }
   };
 
+  // 캐릭터 클릭 핸들러
+  const handleCharacterClick = (character: CharacterWithLikes) => {
+    playCharacterSound(character.name);
+  };
+
   return (
     <main className="min-h-screen p-4 md:p-8 bg-gradient-to-b from-blue-50 to-indigo-100">
       <h1 className="text-3xl md:text-4xl font-bold text-center mb-6 text-indigo-800">캐릭터 도감</h1>
@@ -182,7 +240,8 @@ export default function Characters() {
                 transition: { delay: index * 0.05 }
               }}
               whileHover={{ y: -5 }}
-              className="bg-white rounded-xl shadow-md overflow-hidden"
+              className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer"
+              onClick={() => handleCharacterClick(character)}
             >
               <div className="h-48 overflow-hidden">
                 <Image

@@ -730,21 +730,21 @@ export default function Home() {
     }
   };
   
-  // TTS 재생 함수 수정
+  // TTS 재생 함수를 오디오 파일 재생 함수로 수정
   const playTTS = async (text: string) => {
     try {
       const now = Date.now();
       
       // 0.8초 이내에 중복 호출 방지
       if (now - lastTtsPlayedRef.current < 800) {
-        console.log("TTS 재생 요청이 너무 빠릅니다. 무시됨.");
+        console.log("오디오 재생 요청이 너무 빠릅니다. 무시됨.");
         return;
       }
       
       // 재생 시간 업데이트
       lastTtsPlayedRef.current = now;
       
-      console.log("TTS 재생 시작:", text);
+      console.log("오디오 재생 시작:", text);
       
       // 이미 재생 중인 오디오가 있으면 중지
       if (audioRef.current) {
@@ -752,21 +752,114 @@ export default function Home() {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
         } catch (e) {
-          console.error("이전 TTS 오디오 중지 중 오류:", e);
+          console.error("이전 오디오 중지 중 오류:", e);
         }
       }
       
-      // TTS 재생 중일 때는 음성인식 중지
+      // 오디오 재생 중일 때는 음성인식 중지
       if (recognition) {
         try {
           recognition.abort();
           setRecognition(null);
           setIsListening(false);
         } catch (error) {
-          console.error("TTS 재생 전 음성 인식 중지 오류:", error);
+          console.error("오디오 재생 전 음성 인식 중지 오류:", error);
         }
       }
       
+      // 현재 캐릭터 ID 또는 이름 찾기
+      let audioFileName = '';
+      let characterId = '';
+      
+      // 캐릭터 이름으로 재생 요청된 경우
+      if (text && text.trim() !== '') {
+        // 현재 캐릭터 찾기 (퀴즈 모드)
+        if (currentCharacterIndex >= 0 && processedCharacters && processedCharacters.length > currentCharacterIndex) {
+          const currentCharacter = processedCharacters[currentCharacterIndex];
+          characterId = currentCharacter.id;
+          
+          // 재생 요청된 텍스트가 현재 캐릭터 이름과 일치하는지 확인
+          if (text === currentCharacter.name) {
+            audioFileName = `${text}.mp3`;
+          }
+        } 
+        
+        // 직접 캐릭터 이름이 지정된 경우 (도감 모드 등)
+        if (!audioFileName) {
+          // 모든 캐릭터 이름을 반복하며 일치하는 오디오 파일 찾기
+          const allCharacters = importedCharacters || [];
+          for (const char of allCharacters) {
+            if (char.name === text) {
+              audioFileName = `${text}.mp3`;
+              characterId = char.id;
+              break;
+            }
+          }
+          
+          // 이름으로 찾지 못한 경우 ID로 시도
+          if (!audioFileName) {
+            for (const char of allCharacters) {
+              if (char.id === text) {
+                audioFileName = `${char.name}.mp3`;
+                characterId = char.id;
+                break;
+              }
+            }
+          }
+        }
+        
+        // 그래도 찾지 못했다면 입력된 텍스트 그대로 사용
+        if (!audioFileName) {
+          audioFileName = `${text}.mp3`;
+        }
+      }
+      
+      console.log("오디오 파일 선택:", audioFileName, "캐릭터 ID:", characterId);
+      
+      // 오디오 파일 경로 설정
+      const audioPath = `/sounds/${audioFileName}`;
+      
+      // 오디오 객체 생성 및 재생
+      const audio = new Audio(audioPath);
+      
+      // 오디오 참조 저장
+      audioRef.current = audio;
+      
+      // 오디오 재생 완료 이벤트 핸들러 추가
+      audio.onended = () => {
+        console.log("오디오 재생 완료");
+        setTtsPronounced(true);
+        audioRef.current = null;
+        // 자동 음성인식 시작 코드 제거 - 사용자가 직접 버튼을 눌러야만 시작됨
+      };
+      
+      // 오류 이벤트 핸들러 추가
+      audio.onerror = (e) => {
+        console.error("오디오 재생 오류:", e, "파일:", audioPath);
+        audioRef.current = null;
+        
+        // 오류 시 폴백: 기존 TTS API 호출
+        console.log("오디오 파일 로드 실패, TTS API로 폴백");
+        fallbackToTTS(text);
+      };
+      
+      await audio.play().catch(error => {
+        console.error("오디오 재생 시작 오류:", error);
+        // 오류 시 폴백: 기존 TTS API 호출
+        fallbackToTTS(text);
+      });
+    } catch (error) {
+      console.error('오디오 재생 오류:', error);
+      audioRef.current = null;
+      
+      // 오류 시 폴백: 기존 TTS API 호출
+      fallbackToTTS(text);
+    }
+  };
+
+  // TTS API 폴백 함수 (오디오 파일 로드 실패 시 사용)
+  const fallbackToTTS = async (text: string) => {
+    try {
       const url = await textToSpeech(text);
       if (url) {
         const audio = new Audio(url);
@@ -779,7 +872,6 @@ export default function Home() {
           console.log("TTS 재생 완료");
           setTtsPronounced(true);
           audioRef.current = null;
-          // 자동 음성인식 시작 코드 제거 - 사용자가 직접 버튼을 눌러야만 시작됨
         };
         
         // 오류 이벤트 핸들러 추가
@@ -790,8 +882,8 @@ export default function Home() {
         
         await audio.play();
       }
-    } catch (error) {
-      console.error('TTS 재생 오류:', error);
+    } catch (fallbackError) {
+      console.error('TTS 폴백 재생 오류:', fallbackError);
       audioRef.current = null;
     }
   };
@@ -1577,7 +1669,7 @@ export default function Home() {
       console.error('랭킹 계산 중 오류:', e);
     }
     
-    return (
+  return (
       <motion.div
         className="flex flex-col items-center justify-center w-full p-6 bg-white rounded-lg shadow-lg"
         initial={{ opacity: 0, y: 20 }}
@@ -1655,7 +1747,7 @@ export default function Home() {
                   'border-gray-300 bg-gray-50'
                 }`}>
                   <div className="w-full aspect-square mb-2 overflow-hidden rounded-lg">
-                    <Image
+        <Image
                       src={character.imageUrl}
                       alt={character.name}
                       width={120}
@@ -1716,7 +1808,7 @@ export default function Home() {
               <p className="mt-2 text-sm text-gray-500">
                 * 랭킹에 등록하면 다른 사람들과 점수를 비교할 수 있어요.
               </p>
-            </div>
+        </div>
           </div>
         ) : (
           <div className="w-full mb-8 p-5 bg-yellow-50 rounded-lg border border-yellow-200 shadow-sm">
@@ -1948,6 +2040,24 @@ export default function Home() {
     };
   }, [isListening, recognition]);
 
+  // 다시 듣기 버튼 렌더링 함수 수정
+  const renderListenAgainButton = () => {
+    const currentCharacter = processedCharacters[currentCharacterIndex];
+    
+    if (!currentCharacter) return null;
+    
+    return (
+      <button
+        onClick={() => playTTS(currentCharacter.name)}
+        className="flex items-center justify-center gap-2 bg-purple-100 hover:bg-purple-200 text-purple-700 py-2 px-4 rounded-full transition-colors shadow-sm"
+        aria-label="다시 듣기"
+      >
+        <FaVolumeUp className="text-purple-600" />
+        <span className="text-sm">다시 듣기</span>
+      </button>
+    );
+  };
+
   return (
     <main className="min-h-screen p-4 md:p-8 bg-gradient-to-b from-blue-50 to-indigo-100">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -2103,7 +2213,7 @@ export default function Home() {
               <div className="relative">
                 {processedCharacters.length > 0 && currentCharacterIndex >= 0 && currentCharacterIndex < processedCharacters.length && (
                   <div className="w-40 h-40 mx-auto mb-4 relative rounded-full overflow-hidden border-2 border-indigo-200 shadow-md">
-                    <Image
+          <Image
                       src={processedCharacters[currentCharacterIndex]?.imageUrl || '/characters/default.jpg'}
                       alt="캐릭터 이미지"
                       width={160}
@@ -2123,20 +2233,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">이 캐릭터의 이름은?</h3>
                 
                 <div className="flex justify-center mb-4">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      const currentCharacter = processedCharacters[currentCharacterIndex];
-                      if (currentCharacter && currentCharacter.name) {
-                        playTTS(currentCharacter.name);
-                      }
-                    }}
-                    className="bg-indigo-100 text-indigo-700 py-2 px-4 rounded-lg mr-2 flex items-center"
-                  >
-                    <FaVolumeUp className="mr-2" />
-                    다시 듣기
-                  </motion.button>
+                  {renderListenAgainButton()}
                   
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -2231,15 +2328,15 @@ export default function Home() {
                 style={{ 
                   borderColor: isCorrect ? '#4CAF50' : '#FF2D55',
                 }}
-              >
-                <Image
+        >
+          <Image
                   src={processedCharacters[currentCharacterIndex]?.imageUrl || '/characters/default.jpg'}
                   alt="캐릭터 이미지"
                   width={160}
                   height={160}
                   className="w-full h-full object-cover"
                 />
-              </div>
+    </div>
               
               <div className="bg-white mb-6">
                 <div className="flex items-center justify-center mb-2">
