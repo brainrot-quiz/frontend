@@ -168,6 +168,8 @@ export default function Characters() {
   const [characters, setCharacters] = useState<CharacterWithLikes[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<CharacterWithLikes | null>(null);
+  const [showModal, setShowModal] = useState(false);
   
   // 좋아요 데이터 로드
   useEffect(() => {
@@ -242,7 +244,10 @@ export default function Characters() {
   }, []);
   
   // 좋아요 처리 함수
-  const handleLike = async (characterId: string) => {
+  const handleLike = async (characterId: string, event: React.MouseEvent) => {
+    // 이벤트 버블링 방지 (상위 요소로의 이벤트 전파 중지)
+    event.stopPropagation();
+    
     try {
       // 캐릭터 ID 유효성 확인
       if (!characterId) {
@@ -257,6 +262,15 @@ export default function Characters() {
             ? { ...char, likes: char.likes + 1 } 
             : char
         );
+        
+        // 모달에 표시된 캐릭터가 있으면 해당 캐릭터도 업데이트
+        if (selectedCharacter && selectedCharacter.id === characterId) {
+          setSelectedCharacter({
+            ...selectedCharacter,
+            likes: selectedCharacter.likes + 1
+          });
+        }
+        
         return updatedCharacters.sort((a, b) => b.likes - a.likes);
       });
       
@@ -301,6 +315,15 @@ export default function Characters() {
             ? { ...char, likes: Math.max(0, char.likes - 1) } 
             : char
         );
+        
+        // 모달에 표시된 캐릭터가 있으면 해당 캐릭터도 업데이트
+        if (selectedCharacter && selectedCharacter.id === characterId) {
+          setSelectedCharacter({
+            ...selectedCharacter,
+            likes: Math.max(0, selectedCharacter.likes - 1)
+          });
+        }
+        
         return updatedCharacters.sort((a, b) => b.likes - a.likes);
       });
       
@@ -311,7 +334,18 @@ export default function Characters() {
 
   // 캐릭터 클릭 핸들러
   const handleCharacterClick = (character: CharacterWithLikes) => {
+    // 소리 재생
     playCharacterSound(character.name);
+    
+    // 상세 보기 모달 열기
+    setSelectedCharacter(character);
+    setShowModal(true);
+  };
+  
+  // 모달 닫기 핸들러
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedCharacter(null);
   };
 
   return (
@@ -341,7 +375,7 @@ export default function Characters() {
                 transition: { delay: index * 0.05 }
               }}
               whileHover={{ y: -5 }}
-              className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer"
+              className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer h-[24rem]"
               onClick={() => handleCharacterClick(character)}
             >
               <div className="h-48 overflow-hidden">
@@ -354,18 +388,18 @@ export default function Characters() {
                 />
               </div>
               
-              <div className="p-5">
-                <h2 className="text-xl font-bold mb-2 text-indigo-800">{character.name}</h2>
-                <p className="text-gray-600 mb-4 line-clamp-3">{character.description}</p>
+              <div className="p-5 flex flex-col h-[13rem]">
+                <h2 className="text-xl font-bold mb-2 text-indigo-800 truncate" title={character.name}>{character.name}</h2>
+                <p className="text-gray-600 mb-4 line-clamp-3 h-[4.5rem] overflow-hidden">{character.description}</p>
                 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mt-auto">
                   <div className="flex items-center">
                     <span className="text-indigo-600 font-medium">{character.likes}</span>
                     <span className="text-gray-500 ml-1">likes</span>
                   </div>
                   
                   <motion.button
-                    onClick={() => handleLike(character.id)}
+                    onClick={(event) => handleLike(character.id, event)}
                     whileTap={{ scale: 0.95 }}
                     className="flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-500 px-4 py-2 rounded-lg transition-colors"
                   >
@@ -376,6 +410,79 @@ export default function Characters() {
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+      
+      {/* 캐릭터 상세 보기 모달 */}
+      {showModal && selectedCharacter && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div 
+            className="bg-white rounded-xl overflow-hidden shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+          >
+            <div className="flex flex-col md:flex-row">
+              {/* 캐릭터 이미지 */}
+              <div className="w-full md:w-1/2 h-64 md:h-auto">
+                <Image
+                  src={selectedCharacter.image}
+                  alt={selectedCharacter.name}
+                  width={500}
+                  height={500}
+                  className="w-full h-full object-contain bg-indigo-50 p-4"
+                />
+              </div>
+              
+              {/* 캐릭터 정보 */}
+              <div className="w-full md:w-1/2 p-6 flex flex-col">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-2xl font-bold text-indigo-800 mb-4">{selectedCharacter.name}</h3>
+                  
+                  <button 
+                    onClick={closeModal}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto">
+                  <p className="text-gray-700 mb-6">{selectedCharacter.description}</p>
+                </div>
+                
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center">
+                    <span className="text-indigo-600 font-medium text-lg">{selectedCharacter.likes}</span>
+                    <span className="text-gray-500 ml-1">likes</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => playCharacterSound(selectedCharacter.name)}
+                      className="flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                      </svg>
+                      <span>소리 재생</span>
+                    </button>
+                    
+                    <motion.button
+                      onClick={(event) => handleLike(selectedCharacter.id, event)}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-500 px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <HeartIcon className="h-5 w-5 mr-1" />
+                      <span>좋아요</span>
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       )}
     </main>
