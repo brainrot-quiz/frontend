@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { collection, addDoc, query, orderBy, limit, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { getFirebaseInstance } from '@/firebase/config';
 import { FaUser, FaCalendarAlt, FaPaperPlane, FaHeart } from 'react-icons/fa';
 
 interface GuestbookEntry {
@@ -28,6 +28,9 @@ export default function Guestbook() {
     const fetchEntries = async () => {
       setLoading(true);
       try {
+        // Firebase 인스턴스 가져오기
+        const { db } = await getFirebaseInstance();
+        
         // 로컬 스토리지에서 좋아요 상태 로드
         const storedLikes = localStorage.getItem('guestbookLikes');
         if (storedLikes) {
@@ -110,6 +113,9 @@ export default function Guestbook() {
     const timestamp = new Date().toISOString();
     
     try {
+      // Firebase 인스턴스 가져오기
+      const { db } = await getFirebaseInstance();
+      
       // Firestore에 등록 시도
       const docRef = await addDoc(collection(db, 'guestbook'), {
         name,
@@ -195,6 +201,9 @@ export default function Guestbook() {
     try {
       // "local_"로 시작하는 ID는 로컬에만 저장된 엔트리
       if (!id.startsWith('local_')) {
+        // Firebase 인스턴스 가져오기
+        const { db } = await getFirebaseInstance();
+        
         // Firestore의 해당 문서 참조
         const entryRef = doc(db, 'guestbook', id);
         

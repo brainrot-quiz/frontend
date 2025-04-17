@@ -7,15 +7,18 @@ import { collection, addDoc, doc, getDoc, setDoc, updateDoc, increment } from 'f
 import { getFirebaseInstance } from '@/firebase/config';
 import { useRouter } from 'next/navigation';
 import { textToSpeech } from '@/lib/tts';
-import { FaCheck, FaTimes, FaVolumeUp, FaMicrophone, FaBrain, FaHeadphones, FaUsers } from 'react-icons/fa';
+import { 
+  FaCheck, FaTimes, FaVolumeUp, FaMicrophone, FaBrain, FaHeadphones, FaUsers,
+  FaStar, FaHeart, FaFire, FaLightbulb, FaCheckCircle, FaTimesCircle, FaStepForward, FaShare
+} from 'react-icons/fa';
 import { BiMicrophone, BiMicrophoneOff } from 'react-icons/bi';
 import { RiErrorWarningLine } from 'react-icons/ri';
 import { GiHamburger } from 'react-icons/gi';
-import { characters } from '@/data/characters';
+import { characters, Character as ImportedCharacter } from '@/data/characters';
 import Image from 'next/image';
 import Link from 'next/link';
 import Guestbook from '@/components/Guestbook';
-import { levenshteinDistance } from '@/utils/string';
+// import { levenshteinDistance } from '@/utils/string';
 
 interface SpeechRecognitionEvent extends Event {
   results: {
@@ -87,32 +90,6 @@ const getItalianPronunciation = (text: string, characterId?: string) => {
   // 캐릭터 ID가 있는 경우, 해당 ID를 반환하지 않고 원본 텍스트를 반환합니다
   // 이렇게 하면 TTS가 ID가 아닌 전체 이름을 읽습니다
   return text;
-};
-
-// Levenshtein 거리 계산 함수
-const levenshteinDistance = (a: string, b: string): number => {
-  const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
-
-  for (let i = 0; i <= a.length; i++) {
-    matrix[0][i] = i;
-  }
-
-  for (let j = 0; j <= b.length; j++) {
-    matrix[j][0] = j;
-  }
-
-  for (let j = 1; j <= b.length; j++) {
-    for (let i = 1; i <= a.length; i++) {
-      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[j][i] = Math.min(
-        matrix[j][i - 1] + 1, // 삭제
-        matrix[j - 1][i] + 1, // 삽입
-        matrix[j - 1][i - 1] + substitutionCost // 대체
-      );
-    }
-  }
-
-  return matrix[b.length][a.length];
 };
 
 // 음성 인식 효과를 최상단에서 일반 함수로 추출합니다
@@ -372,6 +349,33 @@ const requestMicrophonePermission = async (
     setMicPermissionGranted(false);
     return false;
   }
+};
+
+// 임시로 Levenshtein 거리 계산 함수 재정의
+// 개발 서버를 재시작하면 @/utils/string에서 import할 수 있습니다
+const levenshteinDistance = (a: string, b: string): number => {
+  const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+
+  for (let i = 0; i <= a.length; i++) {
+    matrix[0][i] = i;
+  }
+
+  for (let j = 0; j <= b.length; j++) {
+    matrix[j][0] = j;
+  }
+
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1, // 삭제
+        matrix[j - 1][i] + 1, // 삽입
+        matrix[j - 1][i - 1] + substitutionCost // 대체
+      );
+    }
+  }
+
+  return matrix[b.length][a.length];
 };
 
 export default function Home() {
@@ -708,6 +712,9 @@ export default function Home() {
       
       // Firebase 저장 시도
       try {
+        // Firebase 인스턴스 가져오기
+        const { db } = await getFirebaseInstance();
+        
         await addDoc(collection(db, 'rankings'), {
           name,
           score,
@@ -1217,7 +1224,7 @@ export default function Home() {
   };
 
   // 모바일 기기 감지
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isMobile = typeof navigator !== 'undefined' ? /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) : false;
   
   // 음성인식 시작 함수 개선
   const startSpeechRecognition = () => {
