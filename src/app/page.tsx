@@ -18,6 +18,7 @@ import { characters, Character as ImportedCharacter } from '@/data/characters';
 import Image from 'next/image';
 import Link from 'next/link';
 import Guestbook from '@/components/Guestbook';
+import ShareButton from '@/components/ShareButton';
 // import { levenshteinDistance } from '@/utils/string';
 
 interface SpeechRecognitionEvent extends Event {
@@ -1427,19 +1428,19 @@ export default function Home() {
         setMicPermissionGranted(true);
         // 상태 명시적 설정 - 즉시 실행
         setIsListening(true);
-+
-+        // Safari/iOS Safari에서 onresult가 바로 오지 않는 경우를 대비해 타임아웃 설정
-+        if (isSafari || isIOSSafari) {
-+          if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
-+          speechTimeoutRef.current = setTimeout(() => {
-+            console.log("Safari 타임아웃 - 자동 stop() 호출");
-+            try {
-+              recognitionInstance.stop();
-+            } catch (e) {
-+              console.warn("Safari stop() 타임아웃 호출 중 오류", e);
-+            }
-+          }, 7000); // 7초 후 자동 종료
-+        }
+
+        // Safari/iOS Safari에서 onresult가 바로 오지 않는 경우를 대비해 타임아웃 설정
+        if (isSafari || isIOSSafari) {
+          if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
+          speechTimeoutRef.current = setTimeout(() => {
+            console.log("Safari 타임아웃 - 자동 stop() 호출");
+            try {
+              recognitionInstance.stop();
+            } catch (e) {
+              console.warn("Safari stop() 타임아웃 호출 중 오류", e);
+            }
+          }, 7000); // 7초 후 자동 종료
+        }
       };
       
       // 결과 이벤트
@@ -1787,6 +1788,7 @@ export default function Home() {
     
   return (
       <motion.div
+        id="quiz-result-card"
         className="flex flex-col items-center justify-center w-full p-6 bg-white rounded-lg shadow-lg"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -2071,6 +2073,9 @@ export default function Home() {
             결과 공유하기
           </motion.button>
         </div>
+
+        {/* 결과 카드 공유 버튼 */}
+        <ShareButton targetId="quiz-result-card" fileName={`quiz_result_${Date.now()}`} />
       </motion.div>
     );
   };

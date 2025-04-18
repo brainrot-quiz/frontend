@@ -1121,6 +1121,7 @@ export default function Fortune() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
           className="max-w-2xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden"
+          id="fortune-result-card"
         >
           <div className={`bg-gradient-to-r ${getRankColor(fortune.rank)} p-4 text-white text-center relative overflow-hidden`}>
             <div className="absolute inset-0 opacity-20">
@@ -1187,64 +1188,140 @@ export default function Fortune() {
                 <p className="text-lg md:text-xl leading-relaxed text-gray-800">{fortune.message}</p>
               </div>
             
-              <div className="flex flex-col md:flex-row md:space-x-4 gap-3 md:gap-0 justify-center">
-                <motion.button
-                  whileHover={{ scale: 1.03, boxShadow: "0 4px 15px -3px rgba(146, 64, 213, 0.4)" }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleShare}
-                  disabled={isSharing}
-                  className={`${
-                    isSharing ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
-                  } text-white px-6 py-3 rounded-lg text-lg font-medium shadow-md transition-all flex-1 flex items-center justify-center gap-2`}
-                >
-                  {isSharing ? (
-                    <>
-                      <span className="animate-pulse">공유 중...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                      </svg>
-                      <span>인스타에 공유하기</span>
-                    </>
-                  )}
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    if (pulledThisSession && remainingPulls > 0) {
-                      // 이번 세션에 뽑기를 했고 남은 뽑기가 있으면 뽑기 화면으로
-                      setShowFortuneResult(false);
-                    } else if (remainingPulls > 0) {
-                      // 이번 세션에 뽑기를 안했고 남은 뽑기가 있으면 바로 뽑기 실행
-                      pullFortune();
-                    } else {
-                      // 남은 뽑기가 없으면 뽑기 화면으로
-                      setShowFortuneResult(false);
-                    }
-                  }}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg text-lg font-medium shadow-md transition-all flex items-center justify-center gap-2"
-                >
-                  {remainingPulls > 0 ? (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1z" clipRule="evenodd" />
-                        <path fillRule="evenodd" d="M10.146 8.746a.5.5 0 01.708 0l3 3a.5.5 0 010 .708l-3 3a.5.5 0 11-.708-.708L12.793 12l-2.647-2.646a.5.5 0 010-.708z" clipRule="evenodd" />
-                      </svg>
-                      <span>{pulledThisSession ? "다시 뽑기" : "새 운세 뽑기"}</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                      </svg>
-                      <span>돌아가기</span>
-                    </>
-                  )}
-                </motion.button>
+              {/* 고급 액션 버튼 영역 */}
+              <div className="mt-6 relative">
+                <div className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-purple-100 shadow-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
+                  
+                    {/* 이미지 저장 버튼 */}
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex-1"
+                    >
+                      <button 
+                        onClick={async () => {
+                          try {
+                            console.log('이미지 저장 시작');
+                            const html2canvas = (await import('html2canvas-pro')).default;
+                            const { saveAs } = await import('file-saver');
+                            const node = document.getElementById('fortune-result-card');
+                            console.log('타겟 노드:', node);
+                            if (!node) return;
+                            
+                            const canvas = await html2canvas(node as HTMLElement, {
+                              backgroundColor: null,
+                              useCORS: true,
+                              allowTaint: true,
+                              onclone: (doc: Document) => {
+                                const all = doc.querySelectorAll<HTMLElement>('*');
+                                all.forEach((el) => {
+                                  const cs = doc.defaultView?.getComputedStyle(el);
+                                  if (!cs) return;
+                                  el.style.backgroundColor = cs.backgroundColor;
+                                  el.style.color = cs.color;
+                                  el.style.borderColor = cs.borderColor;
+                                  el.style.backgroundImage = cs.backgroundImage;
+                                });
+                              }
+                            });
+                            
+                            console.log('캔버스 생성 완료:', canvas);
+                            canvas.toBlob((blob: Blob | null) => {
+                              console.log('Blob 생성:', blob);
+                              if (!blob) return;
+                              saveAs(blob, `fortune_result_${Date.now()}.png`);
+                              console.log('이미지 저장 완료');
+                            }, 'image/png');
+                          } catch (e) {
+                            console.error('이미지 저장 중 오류:', e);
+                            alert('이미지 저장 실패');
+                          }
+                        }}
+                        className="w-full h-full min-h-[100px] bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl px-6 py-4 flex flex-col items-center justify-center shadow-md hover:shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M13 3a1 1 0 011 1v5.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L12 9.586V4a1 1 0 011-1z" />
+                          <path d="M4 12a1 1 0 00-1 1v4a1 1 0 001 1h12a1 1 0 001-1v-4a1 1 0 00-1-1h-2a1 1 0 100 2h1v2H5v-2h1a1 1 0 100-2H4z" />
+                        </svg>
+                        <span className="text-lg font-medium">이미지 저장</span>
+                      </button>
+                    </motion.div>
+                    
+                    {/* 인스타 공유 버튼 */}
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex-1"
+                    >
+                      <button
+                        onClick={handleShare}
+                        disabled={isSharing}
+                        className="w-full h-full min-h-[100px] bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white rounded-xl px-6 py-4 flex flex-col items-center justify-center shadow-md hover:shadow-lg hover:from-pink-600 hover:to-fuchsia-600 transition-all disabled:opacity-70"
+                      >
+                        {isSharing ? (
+                          <>
+                            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
+                            <span className="text-lg font-medium">공유 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                            </svg>
+                            <span className="text-lg font-medium">인스타 공유</span>
+                          </>
+                        )}
+                      </button>
+                    </motion.div>
+                    
+                    {/* 다시 뽑기 / 돌아가기 버튼 */}
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex-1"
+                    >
+                      <button
+                        onClick={() => {
+                          if (pulledThisSession && remainingPulls > 0) {
+                            // 이번 세션에 뽑기를 했고 남은 뽑기가 있으면 뽑기 화면으로
+                            setShowFortuneResult(false);
+                          } else if (remainingPulls > 0) {
+                            // 이번 세션에 뽑기를 안했고 남은 뽑기가 있으면 바로 뽑기 실행
+                            pullFortune();
+                          } else {
+                            // 남은 뽑기가 없으면 뽑기 화면으로
+                            setShowFortuneResult(false);
+                          }
+                        }}
+                        className={`w-full h-full min-h-[100px] text-white rounded-xl px-6 py-4 flex flex-col items-center justify-center shadow-md hover:shadow-lg transition-all ${
+                          remainingPulls > 0
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
+                            : 'bg-gradient-to-r from-gray-500 to-slate-500 hover:from-gray-600 hover:to-slate-600'
+                        }`}
+                      >
+                        {remainingPulls > 0 ? (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1z" clipRule="evenodd" />
+                              <path fillRule="evenodd" d="M10.146 8.746a.5.5 0 01.708 0l3 3a.5.5 0 010 .708l-3 3a.5.5 0 11-.708-.708L12.793 12l-2.647-2.646a.5.5 0 010-.708z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-lg font-medium">
+                              {pulledThisSession ? "다시 뽑기" : "새 운세 뽑기"}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-lg font-medium">돌아가기</span>
+                          </>
+                        )}
+                      </button>
+                    </motion.div>
+                  </div>
+                </div>
               </div>
             
               <p className="mt-6 text-sm text-gray-500">
