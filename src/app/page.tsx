@@ -421,6 +421,8 @@ export default function Home() {
   const lastTtsPlayedRef = useRef<number>(0);
   // 마지막 문제 전환 시간 추적
   const lastQuestionChangeRef = useRef<number>(0);
+  // iOS Safari에서 onresult가 지연되거나 발생하지 않는 문제 해결을 위한 타임아웃 참조
+  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 타이머 설정
   useEffect(() => {
@@ -1403,8 +1405,10 @@ export default function Home() {
         recognitionInstance.continuous = false; // Safari에서는 항상 false로 설정
         recognitionInstance.interimResults = false; // Safari에서는 중간 결과 사용 안함
       } else if (isAndroidChrome) {
-        recognitionInstance.continuous = true; // 안드로이드 크롬에서는 continuous를 true로 설정
-        recognitionInstance.interimResults = true; // 안드로이드에서는 중간 결과 사용
+        // 일부 Android Chrome 기기에서 continuous 모드가 마이크를 계속 활성화시켜
+        // 결과가 전달되지 않는 현상이 보고되었습니다. 안정성을 위해 false로 설정합니다.
+        recognitionInstance.continuous = false;
+        recognitionInstance.interimResults = true; // 중간 결과는 유지하여 빠른 피드백 제공
       } else {
         // 기타 브라우저
         recognitionInstance.continuous = false;
@@ -1423,6 +1427,19 @@ export default function Home() {
         setMicPermissionGranted(true);
         // 상태 명시적 설정 - 즉시 실행
         setIsListening(true);
++
++        // Safari/iOS Safari에서 onresult가 바로 오지 않는 경우를 대비해 타임아웃 설정
++        if (isSafari || isIOSSafari) {
++          if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
++          speechTimeoutRef.current = setTimeout(() => {
++            console.log("Safari 타임아웃 - 자동 stop() 호출");
++            try {
++              recognitionInstance.stop();
++            } catch (e) {
++              console.warn("Safari stop() 타임아웃 호출 중 오류", e);
++            }
++          }, 7000); // 7초 후 자동 종료
++        }
       };
       
       // 결과 이벤트
